@@ -4,7 +4,7 @@ const helloRouter = express.Router();
 
 helloRouter.get('/', (req: Request, res: Response) => {
     res.send({
-        message: 'Hello!',
+        message: 'Sup, Motherfucker!',
     });
 });
 
