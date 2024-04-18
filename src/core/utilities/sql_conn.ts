@@ -20,6 +20,9 @@ const pgConfig: PoolConfig =
 
 const pool = new Pool(pgConfig);
 
+/**
+ * DB upgrade script v0, initializes database from scratch!
+ */
 function initDb(){
     //@formatter:off
     const query: string = `create table if not exists demo

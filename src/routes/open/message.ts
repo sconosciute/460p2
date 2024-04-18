@@ -1,5 +1,5 @@
 //express is the framework we're going to use to handle requests
-import express, { NextFunction, Request, Response, Router } from 'express';
+import express, { NextFunction, request, Request, Response, Router } from 'express';
 //Access the connection to Postgres Database
 import { pool, validationFunctions } from '../../core/utilities';
 
@@ -271,7 +271,7 @@ messageRouter.get('/:name', (request: Request, response: Response) => {
  *      "Updated: {<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
  *
  * @apiError (404: Name Not Found) {String} message "Name not found"
- * @apiError (400: Missing Parameters) {String} message "Missing required information" *
+ * @apiError (400: Missing Parameters) {String} message "Missing required information"
  * @apiUse JSONError
  */
 messageRouter.put(
@@ -304,6 +304,57 @@ messageRouter.put(
             });
     }
 );
+
+/**
+ * @api {put} /message/upPriority request to update message priority
+ *
+ * @apiDescription Request to update the message priority for message from name.
+ *
+ * @apiName PutMessagePriority
+ * @apiGroup Message
+ *
+ * @apiBody {string} name the name to update priority for.
+ * @apiBody {number} priority the new priority to set for the message.
+ *
+ * @apiBuccess entry the string
+ *      "Updated: {<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
+ *
+ * @apiError (404: Name Not Found) {String} message "Name not found"
+ * @apiError (400: Missing Parameters) {String} message "Missing required information"
+ * @apiUse JSONError
+ */
+messageRouter.put(
+    '/upPriority',
+    mwValidNameMessageBody,
+    (req: Request, res: Response, next: NextFunction) => {
+        const query = 'UPDATE demo SET priority = $1 WHERE name = $2 RETURNING *';
+        const values = [req.body.priority, req.body.name];
+
+        pool.query(query, values)
+            .then(
+                (result) => {
+                    if (result.rowCount == 1) {
+                        res.send({
+                            entry: 'Updated: ' + format(result.rows[0]),
+                        });
+                    } else {
+                        res.status(404).send({
+                            message: 'Name not found',
+                        });
+                    }
+                }
+            )
+            .catch(
+                (err) => {
+                    console.error('DB Query error on PUT');
+                    console.error(err);
+                    res.status(500).send({
+                        message: 'server error - contact support',
+                    });
+                }
+            )
+    }
+)
 
 /**
  * @api {delete} /message Request to remove entries
@@ -391,6 +442,8 @@ messageRouter.delete('/:name', (request: Request, response: Response) => {
             });
         });
 });
+
+
 
 // "return" the router
 export { messageRouter };
