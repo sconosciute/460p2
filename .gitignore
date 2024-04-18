@@ -2,6 +2,7 @@
 
 # Compiled output
 /dist
+*.js
 
 # Node
 /node_modules
