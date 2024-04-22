@@ -2,8 +2,9 @@
 
 # Compiled output
 /dist
-/build
+build
 *.js
+*.js.map
 
 # Node
 /node_modules

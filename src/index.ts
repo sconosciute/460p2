@@ -3,13 +3,10 @@ import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
 
 import { routes } from './routes';
-import { initDb } from './core/utilities/sql_conn';
-
-initDb();
 
 const app: Express = express();
 
-const PORT: number = parseInt(process.env.PORT) || 4000;
+const PORT: number = parseInt(process.env.PORT) || 4001;
 
 app.use(cors());
 
