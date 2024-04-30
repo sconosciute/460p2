@@ -4,9 +4,13 @@ import cors from 'cors';
 
 import { routes } from './routes';
 
+import { migrate } from './core/utilities/sql_conn';
+
 const app: Express = express();
 
 const PORT: number = parseInt(process.env.PORT) || 4001;
+
+migrate();
 
 app.use(cors());
 

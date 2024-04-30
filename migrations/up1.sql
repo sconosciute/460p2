@@ -1,11 +1,13 @@
 CREATE TABLE IF NOT EXISTS schema_version
 (
-    version      SMALLINT,
-    upgrade_date TIMESTAMP
+    version      SMALLINT  NOT NULL DEFAULT 0,
+    upgrade_date TIMESTAMP NOT NULL
 );
 
 TRUNCATE schema_version;
-INSERT INTO schema_version VALUES (1, CURRENT_TIMESTAMP);
+INSERT INTO schema_version
+VALUES (1, CURRENT_TIMESTAMP);
+
 
 CREATE TABLE IF NOT EXISTS roles
 (
