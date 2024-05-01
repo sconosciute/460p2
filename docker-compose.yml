@@ -19,7 +19,7 @@ services:
         command: npm run dev
 
     db:
-        image: postgres:latest
+        image: postgres:14
         ports:
             - 5433:5432
         restart: always

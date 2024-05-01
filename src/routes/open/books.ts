@@ -33,6 +33,23 @@ interface IBook {
 }
 
 /**
+ * Check whetehr the query parameter 'sort' is valid. If sort is empty or is neither 'asc' nor 'desc',
+ * change it to default value 'asc'.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ * @param next The next function.
+ */
+const validSort = (req: Request, res: Response, next: NextFunction) => {
+    if (
+        !req.query.sort ||
+        (req.query.sort != 'asc' && req.query.sort != 'desc')
+    ) {
+        req.query.sort = 'asc';
+    }
+};
+
+/**
  * Check whether the query parameters are valid. If not send error with response or change it to valid value.
  * Conditions to send error:
  * - The given offset or page is not numeric value.
@@ -48,13 +65,6 @@ interface IBook {
  * @param next The next function.
  */
 const validParameters = (req: Request, res: Response, next: NextFunction) => {
-    // If invalid or none way of sort is entered, change it to default value.
-    if (
-        !req.query.sort ||
-        (req.query.sort != 'asc' && req.query.sort != 'desc')
-    ) {
-        req.query.sort = 'asc';
-    }
     // Set default value for offset and page if not passed by parameters.
     req.query.offset = req.query.offset ? req.query.offset : '15';
     req.query.page = req.query.page ? req.query.page : '1';
