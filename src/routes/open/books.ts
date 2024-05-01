@@ -194,8 +194,7 @@ bookRouter.get('/all/title', validParameters, (req: Request, res: Response) => {
     // Query used to retrieve all books
     const offset = Number(req.query.offset);
     const page = Number(req.query.page);
-    const sort = 'title ' + req.query.sort;
-    const getBooks = `SELECT * FROM books ORDER BY ${sort} OFFSET $1 LIMIT $2`;
+    const getBooks = `SELECT * FROM books ORDER BY title ${req.query.sort} OFFSET $1 LIMIT $2`;
     const values = [offset * (page - 1), offset];
 
     pool.query(getBooks, values)
