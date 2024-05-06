@@ -4,6 +4,7 @@ import express, { NextFunction, Request, Response, Router } from 'express';
 import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IRatings, IUrlIcon, IBook } from '../../core/models';
+import { QueryResult } from 'pg';
 
 const bookRouter: Router = express.Router();
 
@@ -12,44 +13,7 @@ const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
 
 /**
- * Create a IBook object using the given data. This function assume the data contains all
- * information required to create a IBook objct and the name of each information is same as
- * column name in the table.
- *
- * @param data The information about the book.
- * @returns A IBook object created from the data.
- */
-const createIBook = (data: any): IBook => {
-    // Get rating of the current book
-    const rating: IRatings = {
-        average: data.rating_avg,
-        count: data.rating_count,
-        rating_1: data.rating_1_star,
-        rating_2: data.rating_2_star,
-        rating_3: data.rating_3_star,
-        rating_4: data.rating_4_star,
-        rating_5: data.rating_5_star,
-    };
-    // Get image url of the current book
-    const icon: IUrlIcon = {
-        large: data.image_url,
-        small: data.image_small_url,
-    };
-    // Create a IBook object for the current book
-    const book: IBook = {
-        isbn13: data.isbn13,
-        authors: data.authors,
-        publication: data.publication_year,
-        original_title: data.original_title,
-        title: data.title,
-        ratings: rating,
-        icons: icon,
-    };
-    return book;
-};
-
-/**
- * @api {get} /books/all/title?sort=:sort&offset=:offset&page=:page
+ * @api {get} /books/all/title
  *
  * @apiDescription Request to retrieve all information about all books in a certain page sorted by title.
  * The number of books display per page is specified by offset. The offset and page must be numeric. If a
@@ -88,14 +52,10 @@ bookRouter.get(
         const values = [offset * (page - 1), offset];
 
         pool.query(getBooks, values)
-            .then((result) => {
+            .then((result: QueryResult<IBook>) => {
                 if (result.rowCount > 0) {
-                    const books: IBook[] = [];
-                    result.rows.forEach((row) => {
-                        books.push(createIBook(row));
-                    });
                     res.status(200).send({
-                        books: books,
+                        books: result.rows.map((row: IBook) => row as IBook),
                     });
                 } else {
                     console.error('Error occurs while retrieving books.');
@@ -115,7 +75,7 @@ bookRouter.get(
 );
 
 /**
- * @api {get} /books/all/author?sort=:sort&offset=:offset&page=:page
+ * @api {get} /books/all/author
  *
  * @apiDescription Request to retrieve all information about all books in a certain page sorted by author.
  * If a book has multiple authors, use the author name that comes first in alphabet. The number of books
@@ -139,7 +99,7 @@ bookRouter.get(
  */
 
 /**
- * @api {get} /books/title?title=:title
+ * @api {get} /books/title
  *
  * @apiDescription Request to retrieve a list of books by title. It is possible that no book will be
  * retrieved because no match is found, or multiple books are retrieved because more than one match
@@ -151,10 +111,12 @@ bookRouter.get(
  * @apiQuery {string} title The title of the book to search for.
  *
  * @apiSuccess (200 Success) {IBook[]} books A list of books with title that are similar to the title to search for.
+ *
+ * @apiError (400: Bad request) {String} Missing parameter - Title required.
  */
 
 /**
- * @api {get} /books/isbn?isbn=:isbn
+ * @api {get} /books/isbn
  *
  * @apiDescription Request to retrieve a list of books by ISBN. It is possible that no book will be
  * retrieved because no match is found, or multiple books are retrieved because more than one match
@@ -169,6 +131,29 @@ bookRouter.get(
  *
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numberic."
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not 13 digits long."
+ * @apiError (400: Bad request) {String} Missing parameter - ISBN required.
  */
+
+/*
+ * @api {get} kwSearch
+ *
+ * @apiDescription Performs a keyword search of all books in the database by title and author.
+ *
+ * @apiName prefer getKwSearch
+ * @apiGroup open
+ *
+ * @apiParam {string} q The keywords to search the database for.
+ *
+ * @apiSuccess (200) {Array<IBook>} returns an array containing all matching books
+ * @apiSuccess (204) {String} The query was successfully run, but no books were found.
+ *
+ * @apiError (400: Bad Request) {String} Client provided no or malformed query parameter.
+ * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
+ *
+ */
+bookRouter.get('/search', (req: Request, res: Response, next: NextFunction) => {
+    console.log('Somebody tried to search!');
+    res.status(501).send();
+});
 
 export { bookRouter };

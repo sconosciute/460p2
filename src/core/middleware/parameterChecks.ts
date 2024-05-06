@@ -12,12 +12,9 @@ const isNumberProvided = validationFunctions.isNumberProvided;
  * @param next The next function.
  */
 const validSort = (req: Request, res: Response, next: NextFunction) => {
-    if (
-        !req.query.sort ||
-        (req.query.sort != 'asc' && req.query.sort != 'desc')
-    ) {
-        req.query.sort = 'asc';
-    }
+    let sort = req.query.sort ?? 'asc';
+    if (sort != 'asc' && sort != 'desc') sort = 'asc';
+    req.query.sort = sort;
     next();
 };
 
@@ -31,14 +28,12 @@ const validSort = (req: Request, res: Response, next: NextFunction) => {
  * @param next The next function.
  */
 const validOffset = (req: Request, res: Response, next: NextFunction) => {
-    let offset = req.query.offset ? req.query.offset : 15; // Get parameter or set to default value 15
+    let offset = req.query.offset ?? 15; // Get parameter or set to default value 15
     if (isNumberProvided(offset)) {
         offset = Math.abs(Number(offset));
-        if (offset == 0) {
-            offset = 15;
-        }
+        if (offset == 0) offset = 15;
     } else {
-        console.error('The offset is not numberic.');
+        console.error('The offset is not numeric.');
         res.status(400).send({
             message:
                 'The offset you passed through the request is not numberic.',
@@ -58,7 +53,7 @@ const validOffset = (req: Request, res: Response, next: NextFunction) => {
  * @param next The next function.
  */
 const validPage = (req: Request, res: Response, next: NextFunction) => {
-    const temp = req.query.page ? req.query.page : 1; // Get parameter or set to default value 1
+    const temp = req.query.page ?? 1; // Get parameter or set to default value 1
     let page: number;
     if (isNumberProvided(temp)) {
         const offset = Math.abs(Number(req.query.offset));
@@ -69,11 +64,8 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
                 const maxPage: number = Math.ceil(
                     result.rows[0].count / offset
                 );
-                if (page > maxPage) {
-                    page = maxPage;
-                } else if (page < 1) {
-                    page = 1;
-                }
+                if (page > maxPage) page = maxPage;
+                else if (page < 1) page = 1;
             })
             .catch((error) => {
                 console.error(
@@ -114,9 +106,8 @@ const validISBN = (req: Request, res: Response, next: NextFunction) => {
             message:
                 'The ISBN you passed through the request is not 13 digits.',
         });
-    } else {
-        next();
     }
+    next();
 };
 
 const parameterChecks = {
