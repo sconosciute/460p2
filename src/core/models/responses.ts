@@ -1,4 +1,4 @@
-interface IRatings {
+export interface IRatings {
     average: number;
     count: number;
     rating_1: number;
@@ -8,12 +8,12 @@ interface IRatings {
     rating_5: number;
 }
 
-interface IUrlIcon {
+export interface IUrlIcon {
     large: string;
     small: string;
 }
 
-interface IBook {
+export interface IBook {
     isbn13: number;
     authors: string;
     publication: number;
