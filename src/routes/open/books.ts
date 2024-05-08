@@ -1,9 +1,9 @@
 //express is the framework we're going to use to handle requests
-import express, { NextFunction, Request, Response, Router } from 'express';
+import express, { Request, Response, Router } from 'express';
 //Access the connection to Postgres Database
-import { pool, validationFunctions } from '../../core/utilities';
+import { pool } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
-import { IRatings, IUrlIcon, IBook } from '../../core/models';
+import { IBook } from '../../core/models';
 import { QueryResult } from 'pg';
 
 const bookRouter: Router = express.Router();
@@ -30,8 +30,8 @@ const validPage = parameterChecks.validPage;
  *
  * @apiSuccess (200 Success) {IBook[]} books A list of books in the given page.
  *
- * @apiError (400 Invalid page) {string} message "The page number in the request is not numberic."
- * @apiError (400 Invalid offset) {string} message "The offset in the request is not numberic."
+ * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
+ * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
  * @apiError (400 No book found) {string} message "Database error occurs while retrieving books."
  * @apiError (500 Internal Server Error) {string} message "Server error."
  */
@@ -44,12 +44,16 @@ bookRouter.get(
         // Query used to retrieve all books
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
-        const getBooks = `SELECT * FROM books INNER JOIN 
-            (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author
-                INNER JOIN authors ON (authors.id = book_author.author)
-                GROUP BY book) AS author_table
-            ON (books.id = author_table.book)
-            ORDER BY title ${req.query.sort} OFFSET $1 LIMIT $2;`;
+        const getBooks = `SELECT *
+                          FROM books
+                                   INNER JOIN
+                               (SELECT book, STRING_AGG(authors.name, ', ') AS authors
+                                FROM book_author
+                                         INNER JOIN authors ON (authors.id = book_author.author)
+                                GROUP BY book) AS author_table
+                               ON (books.id = author_table.book)
+                          ORDER BY title ${req.query.sort}
+                          OFFSET $1 LIMIT $2;`;
         const values = [offset * (page - 1), offset];
 
         pool.query(getBooks, values)
@@ -65,16 +69,14 @@ bookRouter.get(
                     });
                 }
             })
-        })
-        .catch((error) => {
-                console.error('DB query error when retriving all books.');
+            .catch((error) => {
+                console.error('DB query error when retrieving all books.');
                 console.error(error);
                 res.status(500).send({
                     message: 'Server error.',
                 });
             });
-    }
-);
+    });
 
 /*
 * @api {post} /books Request to add a new book
@@ -149,8 +151,6 @@ bookRouter.get(
 */
 
 
-=======
-
 /**
  * @api {get} /books/all/author
  *
@@ -170,8 +170,8 @@ bookRouter.get(
  *
  * @apiSuccess (200 Success) {IBook[]} books A list of books in the given page.
  *
- * @apiError (400 Invalid page) {string} message "The page number in the request is not numberic."
- * @apiError (400 Invalid offset) {string} message "The offset in the request is not numberic."
+ * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
+ * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
  * @apiError (400 No book found) {string} message "Database error occurs while retrieving books."
  * @apiError (500 Internal Server Error) {string} message "Server error."
  */
@@ -208,7 +208,7 @@ bookRouter.get(
  *
  * @apiSuccess (200 Success) {IBook[]} books A list of books with given ISBN.
  *
- * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numberic."
+ * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not 13 digits long."
  * @apiError (400 Bad request) {String} message Missing parameter - ISBN required.
  * @apiError (500 Internal Server Error) {string} message "Server error."
@@ -231,7 +231,7 @@ bookRouter.get(
  * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
  *
  */
-bookRouter.get('/search', (req: Request, res: Response, next: NextFunction) => {
+bookRouter.get('/search', (req: Request, res: Response) => {
     console.log('Somebody tried to search!');
     res.status(501).send();
 });
