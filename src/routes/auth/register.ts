@@ -155,6 +155,51 @@ const mwRegisterDbUser = (request: IUserRequest, response: Response, next: NextF
         });
 }
 
+const mwRegisterUserPass = (request: IUserRequest, response: Response) => {
+    //We're storing salted hashes to make our application more secure
+    //If you're interested as to what that is, and why we should use it
+    //watch this youtube video: https://www.youtube.com/watch?v=8ZtInClXe1Q
+    const salt = generateSalt(32);
+    const saltedHash = generateHash(request.body.password, salt);
+
+    const theQuery =
+        'INSERT INTO Account_Credential(account_id, salted_hash, salt) VALUES ($1, $2, $3)';
+    const values = [request.id, saltedHash, salt];
+    pool.query(theQuery, values)
+        .then(() => {
+            const accessToken = jwt.sign(
+                {
+                    role: request.body.role,
+                    id: request.id,
+                },
+                key.secret,
+                {
+                    expiresIn: '14 days', // expires in 14 days
+                },
+            );
+            //We successfully added the user!
+            response.status(201).send({
+                accessToken,
+                id: request.id,
+            });
+        })
+        .catch((error) => {
+            /***********************************************************************
+             * If we get an error inserting the PWD, we should go back and remove
+             * the user from the member table. We don't want a member in that table
+             * without a PWD! That implementation is up to you if you want to add
+             * that step.
+             **********************************************************************/
+
+            //log the error
+            console.error('DB Query error on register');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+}
+
 /**
  * @api {post} /register Request to register a user
  *
@@ -192,50 +237,7 @@ registerRouter.post(
     mwCheckPassword,
     mwCheckRole,
     mwRegisterDbUser,
-    (request: IUserRequest, response: Response) => {
-        //We're storing salted hashes to make our application more secure
-        //If you're interested as to what that is, and why we should use it
-        //watch this youtube video: https://www.youtube.com/watch?v=8ZtInClXe1Q
-        const salt = generateSalt(32);
-        const saltedHash = generateHash(request.body.password, salt);
-
-        const theQuery =
-            'INSERT INTO Account_Credential(account_id, salted_hash, salt) VALUES ($1, $2, $3)';
-        const values = [request.id, saltedHash, salt];
-        pool.query(theQuery, values)
-            .then(() => {
-                const accessToken = jwt.sign(
-                    {
-                        role: request.body.role,
-                        id: request.id,
-                    },
-                    key.secret,
-                    {
-                        expiresIn: '14 days', // expires in 14 days
-                    },
-                );
-                //We successfully added the user!
-                response.status(201).send({
-                    accessToken,
-                    id: request.id,
-                });
-            })
-            .catch((error) => {
-                /***********************************************************************
-                 * If we get an error inserting the PWD, we should go back and remove
-                 * the user from the member table. We don't want a member in that table
-                 * without a PWD! That implementation is up to you if you want to add
-                 * that step.
-                 **********************************************************************/
-
-                //log the error
-                console.error('DB Query error on register');
-                console.error(error);
-                response.status(500).send({
-                    message: 'server error - contact support',
-                });
-            });
-    },
+    mwRegisterUserPass,
 );
 
 registerRouter.get('/hash_demo', (request, response) => {
