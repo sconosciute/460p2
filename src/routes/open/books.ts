@@ -44,80 +44,89 @@ bookRouter.get('/search',
         });
 
 /*
-* @api {get} /allBooksByPubDate
+* @api {get} /books/all
 *
-* @apiDescription Request to retrieve all books, sorted by publication date.
+* @apiDescription Request to retrieve all books sorted by publication date.
 *   If there are multiple books published on the same date, those books are then
-*   sorted in descending alphabetical order (A to Z).
+*   sorted by title in descending alphabetical order (A to Z). Uses pagination,
+*   where offset is the number of books per page. A negative/zero offset will
+*   be converted to positive. A page less than one will redirect to the first
+*   page. A page number larger than the maximum will redirect to the maximum
+*   page.
 *
-* @apiName getAllBooksByPubDate
+* @apiName GetAllByPub
 * @apiGroup books
 *
-* @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books with
-*   the specified author, if any.
+* @apiQuery {String = "asc", "desc"} sort="asc" The order of the book. Use "asc"
+*   for ascending and "desc" for descending.
+* @apiQuery {Number} offset=15 The number of books displayed per page. Default
+*   is 15.
+* @apiQuery {Number} page=1 The page number. Default is 1.
 *
-* @apiError (500: Internal server error) {String} Server or database error occurred.
+* @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books sorted by publication date.
+*
+* @apiError (500: Internal server error) {String} message Server or database error occurred.
 */
 // method goes here
 
 /*
-* @api {get} /author
+* @api {get} /books/search
 *
 * @apiDescription Request to search and retrieve all books with the specified
-*   author.
+*   author. A book with multiple authors will still be retrieved if one author
+*   matches the name searched.
 *
-* @apiName getBooksByAuthor
+* @apiName GetBooksByAuthor
 * @apiGroup books
 *
-* @apiBody {String} authorName The author's first and/or last name.
+* @apiQuery author The author's first and/or last name
 *
-* @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books sorted
-*   by publication date.
+* @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books with the author specified in input.
 *
-* @apiError (400: Bad request) {String} Missing parameter - Author name required.
-* @apiError (500: Internal server error) {String} Server or database error occurred.
+* @apiError (400: Bad request) {String} message Missing parameter - Author name required.
+* @apiError (500: Internal server error) {String} message Server or database error occurred.
 */
 // method goes here
 
 /*
-* @api {get} /rating
+* @api {get} /books/search
 *
 * @apiDescription Request to search and retrieve all books that have a rating
 *   that is within the given rating range (inclusive).
 *
-* @apiName getBooksByRating
+* @apiName GetBooksByRating
 * @apiGroup books
 *
-* @apiBody {int} min The minimum rating.
-* @apiBody {int} max The maximum rating.
+* @apiQuery {Number} min The minimum rating.
+* @apiQuery {Number} max The maximum rating.
 *
 * @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books that
 *   have a rating within the given range.
 *
-* @apiError (400: Bad request) {String} Missing parameter(s) - Min and Max rating
+* @apiError (400: Bad request) {String} message Missing parameter(s) - Min and Max rating
 *   required.
-* @apiError (500: Internal server error) {String} Server or database error occurred.
+* @apiError (500: Internal server error) {String} message Server or database error occurred.
 */
 // method goes here
 
 /*
-* @api {put} /updateBook
+* @api {put} /books
 *
 * @apiDescription Allows an authenticated user to update a book's information.
 *   Retrieves the book to be updated with the ISBN.
 *
-* @apiName updateBook
+* @apiName UpdateBook
 * @apiGroup books
 *
-* @apiBody {Int} isbn-13 The ISBN of the book to be updated.
+* @apiParam {Int} isbn-13 The ISBN of the book to be updated.
 * @apiParam {String} attribute The attribute of the book that will be updated.
 * @apiParam {String} newInfo The information to update the book with.
 *
 * @apiSuccess (200: Success) {String} Book updated successfully.
 *
-* @apiError (400: Bad request) {String} Missing parameter(s).
-* @apiError (401: Unauthorized) {String} User does not have permission to update books.
-* @apiError (500: Internal server error) {String} Server or database error occurred.
+* @apiError (400: Bad request) {String} message Missing parameter(s).
+* @apiError (401: Unauthorized) {String} message User does not have permission to update books.
+* @apiError (500: Internal server error) {String} message Server or database error occurred.
 */
 // method goes here
 
