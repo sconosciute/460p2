@@ -33,6 +33,7 @@ const validPage = parameterChecks.validPage;
  * @apiError (400 Invalid page) {string} message "The page number in the request is not numberic."
  * @apiError (400 Invalid offset) {string} message "The offset in the request is not numberic."
  * @apiError (400 No book found) {string} message "Database error occurs while retrieving books."
+ * @apiError (500 Internal Server Error) {string} message "Server error."
  */
 bookRouter.get(
     '/all/title',
@@ -96,6 +97,7 @@ bookRouter.get(
  * @apiError (400 Invalid page) {string} message "The page number in the request is not numberic."
  * @apiError (400 Invalid offset) {string} message "The offset in the request is not numberic."
  * @apiError (400 No book found) {string} message "Database error occurs while retrieving books."
+ * @apiError (500 Internal Server Error) {string} message "Server error."
  */
 
 /**
@@ -112,7 +114,8 @@ bookRouter.get(
  *
  * @apiSuccess (200 Success) {IBook[]} books A list of books with title that are similar to the title to search for.
  *
- * @apiError (400: Bad request) {String} Missing parameter - Title required.
+ * @apiError (400 Bad request) {String} message Missing parameter - Title required.
+ * @apiError (500 Internal Server Error) {string} message "Server error."
  */
 
 /**
@@ -131,10 +134,11 @@ bookRouter.get(
  *
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numberic."
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not 13 digits long."
- * @apiError (400: Bad request) {String} Missing parameter - ISBN required.
+ * @apiError (400 Bad request) {String} message Missing parameter - ISBN required.
+ * @apiError (500 Internal Server Error) {string} message "Server error."
  */
 
-/*
+/**
  * @api {get} kwSearch
  *
  * @apiDescription Performs a keyword search of all books in the database by title and author.
@@ -149,7 +153,6 @@ bookRouter.get(
  *
  * @apiError (400: Bad Request) {String} Client provided no or malformed query parameter.
  * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
- *
  */
 bookRouter.get('/search', (req: Request, res: Response, next: NextFunction) => {
     console.log('Somebody tried to search!');
