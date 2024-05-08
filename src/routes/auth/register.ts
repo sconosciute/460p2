@@ -46,11 +46,13 @@ const isValidRole = (priority: string): boolean =>
 const isValidEmail = (email: string): boolean =>
     isStringProvided(email) && email.includes('@');
 
-// middleware functions may be defined elsewhere!
-const emailMiddlewareCheck = (
+/**
+ * Checks if email is valid
+ */
+const mwCheckEmail = (
     request: Request,
     response: Response,
-    next: NextFunction
+    next: NextFunction,
 ) => {
     if (isValidEmail(request.body.email)) {
         next();
@@ -61,6 +63,97 @@ const emailMiddlewareCheck = (
         });
     }
 };
+
+const mwCheckProvidedReqParam = (request: Request, response: Response, next: NextFunction) => {
+    //Verify that the caller supplied all the parameters
+    //In js, empty strings or null values evaluate to false
+    if (
+        isStringProvided(request.body.firstname) &&
+        isStringProvided(request.body.lastname) &&
+        isStringProvided(request.body.username)
+    ) {
+        next();
+    } else {
+        response.status(400).send({
+            message: 'Missing required information',
+        });
+    }
+};
+
+const mwCheckPhone = (request: Request, response: Response, next: NextFunction) => {
+    if (isValidPhone(request.body.phone)) {
+        next();
+        return;
+    } else {
+        response.status(400).send({
+            message:
+                'Invalid or missing phone number  - please refer to documentation',
+        });
+        return;
+    }
+}
+
+const mwCheckPassword = (request: Request, response: Response, next: NextFunction) => {
+    if (isValidPassword(request.body.password)) {
+        next();
+    } else {
+        response.status(400).send({
+            message:
+                'Invalid or missing password  - please refer to documentation',
+        });
+    }
+}
+
+const mwCheckRole = (request: Request, response: Response, next: NextFunction) => {
+    if (isValidRole(request.body.role)) {
+        next();
+    } else {
+        response.status(400).send({
+            message:
+                'Invalid or missing role  - please refer to documentation',
+        });
+    }
+}
+
+const mwRegisterDbUser = (request: IUserRequest, response: Response, next: NextFunction) => {
+    const theQuery =
+        'INSERT INTO Account(firstname, lastname, username, email, phone, create_date, account_role) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING account_id';
+    const values = [
+        request.body.firstname,
+        request.body.lastname,
+        request.body.username,
+        request.body.email,
+        request.body.phone,
+        request.body.role,
+    ];
+    pool.query(theQuery, values)
+        .then((result) => {
+            //stash the account_id into the request object to be used in the next function
+            // NOTE the TYPE for the Request object in this middleware function
+            request.id = result.rows[0].account_id;
+            next();
+        })
+        .catch((error) => {
+            //log the error
+            // console.log(error)
+            if (error.constraint == 'account_username_key') {
+                response.status(400).send({
+                    message: 'Username exists',
+                });
+            } else if (error.constraint == 'account_email_key') {
+                response.status(400).send({
+                    message: 'Email exists',
+                });
+            } else {
+                //log the error
+                console.error('DB Query error on register');
+                console.error(error);
+                response.status(500).send({
+                    message: 'server error - contact support',
+                });
+            }
+        });
+}
 
 /**
  * @api {post} /register Request to register a user
@@ -93,93 +186,12 @@ const emailMiddlewareCheck = (
  */
 registerRouter.post(
     '/register',
-    emailMiddlewareCheck, // these middleware functions may be defined elsewhere!
-    (request: Request, response: Response, next: NextFunction) => {
-        //Verify that the caller supplied all the parameters
-        //In js, empty strings or null values evaluate to false
-        if (
-            isStringProvided(request.body.firstname) &&
-            isStringProvided(request.body.lastname) &&
-            isStringProvided(request.body.username)
-        ) {
-            next();
-        } else {
-            response.status(400).send({
-                message: 'Missing required information',
-            });
-        }
-    },
-    (request: Request, response: Response, next: NextFunction) => {
-        if (isValidPhone(request.body.phone)) {
-            next();
-            return;
-        } else {
-            response.status(400).send({
-                message:
-                    'Invalid or missing phone number  - please refer to documentation',
-            });
-            return;
-        }
-    },
-    (request: Request, response: Response, next: NextFunction) => {
-        if (isValidPassword(request.body.password)) {
-            next();
-        } else {
-            response.status(400).send({
-                message:
-                    'Invalid or missing password  - please refer to documentation',
-            });
-        }
-    },
-    (request: Request, response: Response, next: NextFunction) => {
-        if (isValidRole(request.body.role)) {
-            next();
-        } else {
-            response.status(400).send({
-                message:
-                    'Invalid or missing role  - please refer to documentation',
-            });
-        }
-    },
-    (request: IUserRequest, response: Response, next: NextFunction) => {
-        const theQuery =
-            'INSERT INTO Account(firstname, lastname, username, email, phone, create_date, account_role) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING account_id';
-        const values = [
-            request.body.firstname,
-            request.body.lastname,
-            request.body.username,
-            request.body.email,
-            request.body.phone,
-            request.body.role,
-        ];
-        pool.query(theQuery, values)
-            .then((result) => {
-                //stash the account_id into the request object to be used in the next function
-                // NOTE the TYPE for the Request object in this middleware function
-                request.id = result.rows[0].account_id;
-                next();
-            })
-            .catch((error) => {
-                //log the error
-                // console.log(error)
-                if (error.constraint == 'account_username_key') {
-                    response.status(400).send({
-                        message: 'Username exists',
-                    });
-                } else if (error.constraint == 'account_email_key') {
-                    response.status(400).send({
-                        message: 'Email exists',
-                    });
-                } else {
-                    //log the error
-                    console.error('DB Query error on register');
-                    console.error(error);
-                    response.status(500).send({
-                        message: 'server error - contact support',
-                    });
-                }
-            });
-    },
+    mwCheckEmail, // these middleware functions may be defined elsewhere!
+    mwCheckProvidedReqParam,
+    mwCheckPhone,
+    mwCheckPassword,
+    mwCheckRole,
+    mwRegisterDbUser,
     (request: IUserRequest, response: Response) => {
         //We're storing salted hashes to make our application more secure
         //If you're interested as to what that is, and why we should use it
@@ -200,7 +212,7 @@ registerRouter.post(
                     key.secret,
                     {
                         expiresIn: '14 days', // expires in 14 days
-                    }
+                    },
                 );
                 //We successfully added the user!
                 response.status(201).send({
@@ -223,7 +235,7 @@ registerRouter.post(
                     message: 'server error - contact support',
                 });
             });
-    }
+    },
 );
 
 registerRouter.get('/hash_demo', (request, response) => {
@@ -239,5 +251,6 @@ registerRouter.get('/hash_demo', (request, response) => {
         unsalted_hash: unsaltedHash,
     });
 });
+
 
 export { registerRouter };
