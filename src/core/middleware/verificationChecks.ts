@@ -1,4 +1,4 @@
-import { NextFunction, Response } from 'express';
+import { NextFunction, RequestHandler, Response } from 'express';
 import { IJwtRequest } from '../models/JwtRequest.model';
 
 export const checkParamsIdToJwtId = (
@@ -13,3 +13,5 @@ export const checkParamsIdToJwtId = (
     }
     next();
 };
+//Add middle ware for permissions
+
