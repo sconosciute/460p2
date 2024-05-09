@@ -13,6 +13,7 @@ import {
     credentialingFunctions,
 } from '../../core/utilities';
 import { QueryResult } from 'pg';
+import { issueJwt } from './index';
 
 const isStringProvided = validationFunctions.isStringProvided;
 const isNumberProvided = validationFunctions.isNumberProvided;
@@ -156,15 +157,7 @@ const mwRegisterUser = async (req: IUserRequest, res: Response, next: NextFuncti
         await db.query('COMMIT');
         db.release();
 
-        const accessToken = jwt.sign(
-            {},
-            key.secret,
-            {
-                expiresIn: '14 days',
-                subject: accId.toString(),
-                audience: process.env.DOMAIN,
-            },
-        );
+        const accessToken = issueJwt(accId);
 
         console.log('Registered new user, sending success!');
         res.status(201).send({
