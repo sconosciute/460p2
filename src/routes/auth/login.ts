@@ -33,7 +33,7 @@ const key = {
  * @apiName GetAuth
  * @apiGroup Auth
  *
- * @apiHeader {String} authorization "username:password" uses Basic Auth
+ * @apiHeader {string} authorization "Basic username:password" where username:password is a Base64 encoded string.
  *
  * @apiSuccess {String} accessToken JSON Web Token
  * @apiSuccess {number} id unique user id
@@ -41,7 +41,7 @@ const key = {
  * @apiError (400: Missing Authorization Header) {String} message "Missing Authorization Header"
  * @apiError (400: Malformed Authorization Header) {String} message "Malformed Authorization Header"
  * @apiError (404: User Not Found) {String} message "User not found"
- * @apiError (400: Invalid Credentials) {String} message "Credentials did not match"
+ * @apiError (401: Invalid Credentials) {String} message "Incorrect Username/Password"
  *
  */
 signinRouter.post(
@@ -120,8 +120,8 @@ signinRouter.post(
                     });
                 } else {
                     //credentials dod not match
-                    response.setHeader("WWW-Authenticate", "Basic realm=User Login")
-                    response.status(400).send({
+                    response.setHeader('WWW-Authenticate', 'Basic realm=User Login');
+                    response.status(401).send({
                         message: 'Incorrect Username/Password',
                     });
                 }
