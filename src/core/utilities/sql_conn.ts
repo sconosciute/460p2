@@ -29,7 +29,6 @@ function migrate() {
     pool.query('SELECT * FROM schema_version')
         .then((res) => {
             version = res.rows[0]?.version;
-            console.dir(res);
             switch (version) {
                 case 1 :
                     upgrade2();
