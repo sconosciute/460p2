@@ -97,26 +97,6 @@ bookRouter.get('/search',
 * @apiError (403) {String} message "Unauthorized user"
 */
 
-bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextFunction) => {
-
-    const query = 'DELETE FROM books WHERE isbn13 = ' + req.params.isbn +';';
-
-    pool.query(query)
-        .then((result) => {
-            res.status(200).send({
-                message:(`Deleted book.`),
-            });
-        })
-        .catch((e) => {
-            console.log(`Server failed to delete books due to ${e}`);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
-
-
-
-
-
 /*
 * @api {delete} /books Request to delete a range of books
 *
@@ -136,22 +116,10 @@ bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextF
 * @apiError (403) {String} message "Unauthorized user"
 */
 
-bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
 
     const query = 'DELETE FROM books WHERE id BETWEEN $1 AND $2;';
     const values = [req.params.min_id, req.params.max_id];
 
-pool.query(query)
-    .then((result) => {
-        res.status(200).send({
-            message:(`Deleted range of books with ID [` + req.params.min_id +  ',' + req.params.max_id),
-    });
-    })
-    .catch((e) => {
-        console.log(`Server failed to delete books due to ${e}`);
-        res.status(500).send('Server error, so sorry!');
-    });
-});
 
 
 
