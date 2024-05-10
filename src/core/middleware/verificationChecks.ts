@@ -14,4 +14,20 @@ export const checkParamsIdToJwtId = (
     next();
 };
 //Add middle ware for permissions
+const hasPermissions = (permissions) => {
+    return (request, response, next)=> {
+        const userRole = request.body.role;
+        if (permissions.includes(userRole)) {
+            next();
+        } else {
+            response.status(401).send({
+                message:
+                    'Missing required permission to access',
+            });
+        }
+    }
+}
+
+
+
 
