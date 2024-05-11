@@ -1,17 +1,20 @@
-import express, { Router } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 
 import { signinRouter } from './login';
 import { registerRouter } from './register';
+import { authHelpRouter} from './helpers';
 import jwt from 'jsonwebtoken';
+import { pool } from '../../core/utilities';
+
 const key = {
     secret: process.env.JSON_WEB_TOKEN,
 };
 
 const authRoutes: Router = express.Router();
 
-authRoutes.use(signinRouter, registerRouter);
+authRoutes.use(signinRouter, registerRouter, authHelpRouter);
 
-export function issueJwt(id: number) : string  {
+export function issueJwt(id: number): string {
     return jwt.sign(
         {},
         key.secret,
