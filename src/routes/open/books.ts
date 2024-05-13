@@ -297,13 +297,13 @@ bookRouter.get(
 //region searches
 
 /**
- * @api {get} /books/title
+ * @api {get} /books/search/title
  *
  * @apiDescription Request to retrieve a list of books by title. It is possible that no book will be
  * retrieved because no match is found, or multiple books are retrieved because more than one match
  * is found. The title can be found by both title and original title.
  *
- * @apiName GetByTitle
+ * @apiName SearchByTitle
  * @apiGroup Books
  *
  * @apiQuery {string} title The title of the book to search for.
@@ -315,7 +315,7 @@ bookRouter.get(
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
-    '/title',
+    '/search/title',
     (req: Request, res: Response, next: NextFunction) => {
         // Send 400 if title of null or only contains white space
         if (!req.query.title || String(req.query.title).trim().length == 0) {
@@ -338,13 +338,13 @@ bookRouter.get(
 );
 
 /**
- * @api {get} /books/isbn
+ * @api {get} /books/search/isbn
  *
  * @apiDescription Request to retrieve a list of books by ISBN. It is possible that no book will be
  * retrieved because no match is found, or multiple books are retrieved because more than one match
  * is found.
  *
- * @apiName GetByISBN
+ * @apiName SearchByISBN
  * @apiGroup Books
  *
  * @apiQuery {number} isbn The ISBN of the book to search for.
@@ -357,7 +357,7 @@ bookRouter.get(
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
-    '/isbn',
+    '/search/isbn',
     (req: Request, res: Response, next: NextFunction) => {
         if (!req.query.isbn || String(req.query.isbn).trim().length == 0) {
             console.error('Missing parameter - ISBN required.');
@@ -376,7 +376,7 @@ bookRouter.get(
 );
 
 /**
- * @api {get} kwSearch
+ * @api {get} /book/search
  *
  * @apiDescription Performs a keyword search of all books in the database checking for title or author matches. May only contain alphanumeric characters, no white space or special characters. ex: "this+is+a+valid+query".
  *

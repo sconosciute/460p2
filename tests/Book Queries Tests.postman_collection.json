@@ -1472,12 +1472,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/title",
+							"raw": "{{base_url}}/books/search/title",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"title"
 							]
 						}
@@ -1507,12 +1508,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/title?title=  ",
+							"raw": "{{base_url}}/books/search/title?title=  ",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"title"
 							],
 							"query": [
@@ -1558,12 +1560,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/title?title=the",
+							"raw": "{{base_url}}/books/search/title?title=the",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"title"
 							],
 							"query": [
@@ -1599,12 +1602,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/isbn",
+							"raw": "{{base_url}}/books/search/isbn",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"isbn"
 							]
 						}
@@ -1634,12 +1638,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/isbn?isbn=  ",
+							"raw": "{{base_url}}/books/search/isbn?isbn=  ",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"isbn"
 							],
 							"query": [
@@ -1675,12 +1680,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/isbn?isbn=abc",
+							"raw": "{{base_url}}/books/search/isbn?isbn=abc",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"isbn"
 							],
 							"query": [
@@ -1716,12 +1722,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/isbn?isbn=12345",
+							"raw": "{{base_url}}/books/search/isbn?isbn=12345",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"isbn"
 							],
 							"query": [
@@ -1767,12 +1774,13 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/books/isbn?isbn=9781423118240",
+							"raw": "{{base_url}}/books/search/isbn?isbn=9781423118240",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"books",
+								"search",
 								"isbn"
 							],
 							"query": [
