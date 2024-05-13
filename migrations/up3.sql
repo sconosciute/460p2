@@ -25,6 +25,8 @@ ALTER TABLE books
 UPDATE books b
 SET kw_vec = to_tsvector('english', b.title || ' ' || get_authors(b.id));
 
+CREATE INDEX keyword_idx ON books USING GIN (kw_vec);
+
 -- Update index when a book is created or re-titled
 
 CREATE OR REPLACE FUNCTION book_updated()
