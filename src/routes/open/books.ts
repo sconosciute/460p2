@@ -18,6 +18,7 @@ SELECT * FROM books INNER JOIN
         authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
     ON (books.id = author_table.book)`;
 
+//region Post/Delete
 /**
  * @api {post} /books Request to add a new book
  *
@@ -89,6 +90,10 @@ SELECT * FROM books INNER JOIN
  * @apiError (403) {String} message "Unauthorized user"
  */
 
+//endregion Post/Delete
+
+//region helpers
+
 /**
  * Get the result by executing the given query and send a list of IBook as response.
  *
@@ -143,6 +148,10 @@ const queryAndResponse = (
             });
         });
 };
+
+//endregion helpers
+
+//region getAll
 
 /**
  * @api {get} /books/all/title
@@ -218,6 +227,36 @@ bookRouter.get(
         queryAndResponse(getBooks, res, true);
     }
 );
+
+/**
+ * @api {get} /books/all
+ *
+ * @apiDescription Request to retrieve all books sorted by publication date.
+ *   If there are multiple books published on the same date, those books are then
+ *   sorted by title in descending alphabetical order (A to Z). Uses pagination,
+ *   where offset is the number of books per page. A negative/zero offset will
+ *   be converted to positive. A page less than one will redirect to the first
+ *   page. A page number larger than the maximum will redirect to the maximum
+ *   page.
+ *
+ * @apiName GetAllByPub
+ * @apiGroup books
+ *
+ * @apiQuery {String = "asc", "desc"} sort="asc" The order of the book. Use "asc"
+ *   for ascending and "desc" for descending.
+ * @apiQuery {Number} offset=15 The number of books displayed per page. Default
+ *   is 15.
+ * @apiQuery {Number} page=1 The page number. Default is 1.
+ *
+ * @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books sorted by publication date.
+ *
+ * @apiError (500: Internal server error) {String} message Server or database error occurred.
+ */
+// method goes here
+
+//endregion getAll
+
+//region searches
 
 /**
  * @api {get} /books/title
@@ -320,31 +359,7 @@ bookRouter.get('/search', (req: Request, res: Response) => {
     res.status(501).send();
 });
 
-/**
- * @api {get} /books/all
- *
- * @apiDescription Request to retrieve all books sorted by publication date.
- *   If there are multiple books published on the same date, those books are then
- *   sorted by title in descending alphabetical order (A to Z). Uses pagination,
- *   where offset is the number of books per page. A negative/zero offset will
- *   be converted to positive. A page less than one will redirect to the first
- *   page. A page number larger than the maximum will redirect to the maximum
- *   page.
- *
- * @apiName GetAllByPub
- * @apiGroup books
- *
- * @apiQuery {String = "asc", "desc"} sort="asc" The order of the book. Use "asc"
- *   for ascending and "desc" for descending.
- * @apiQuery {Number} offset=15 The number of books displayed per page. Default
- *   is 15.
- * @apiQuery {Number} page=1 The page number. Default is 1.
- *
- * @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books sorted by publication date.
- *
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
- */
-// method goes here
+
 
 /**
  * @api {get} /books/search
@@ -406,5 +421,7 @@ bookRouter.get('/search', (req: Request, res: Response) => {
  * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
 // method goes here
+
+//endregion searches
 
 export { bookRouter };
