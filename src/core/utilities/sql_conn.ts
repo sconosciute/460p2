@@ -3,6 +3,10 @@ import { Pool, PoolConfig } from 'pg';
 import fs from 'node:fs';
 import { ISchemaVersion } from '../models/dbSchema';
 
+const up1Path = 'migrations/up1.sql';
+const up2Path = 'migrations/up2.sql';
+const up3Path = 'migrations/up3.sql';
+
 const pgConfig: PoolConfig =
     process.env.PGHOST !== undefined
         ? {
@@ -31,10 +35,15 @@ function migrate() {
             version = res.rows[0]?.version;
             switch (version) {
                 case 1 :
-                    upgrade2();
+                    console.log('Upgrading DB Schema to V2');
+                    upgrade(up2Path);
                     break;
                 case 2 :
-                    console.log('DB Schema v2 up to date!');
+                    console.log('Upgrading DB Schema to V3');
+                    upgrade(up3Path)
+                    break;
+                case 3 :
+                    console.log('DB Schema V3 up to date.');
                     break;
                 default :
                     throw new Error(`Unrecognized database schema version ${version}, panicking!`);
@@ -43,33 +52,21 @@ function migrate() {
         .catch((err) => {
             //Err 42P01 = failed to find table
             if (err.code == '42P01') {
-                upgrade1();
+                upgrade(up1Path);
             } else {
                 console.error(`Unable to upgrade database due to ${err}`)
             }
         });
 }
 
-function upgrade1() {
+function upgrade(path: string) {
     try {
-        const query = fs.readFileSync('migrations/up1.sql');
-        console.log('Retrieved migration script, running upgrade 1');
+        const query = fs.readFileSync(path);
+        console.log("Retrieved migration script, running upgrade");
         pool.query(query.toString())
-            .then(() => console.log('Upgraded to DB Schema v1'));
-    } catch (error) {
-        console.error(`Failed to upgrade DB Schema due to ${error}`);
-        throw error;
-    }
-}
-
-function upgrade2() {
-    try {
-        const query = fs.readFileSync('migrations/up2.sql');
-        console.log('Retrieved migration script, running upgrade 2');
-        pool.query(query.toString())
-            .then(() => console.log('Upgraded to DB Schema v2'));
+            .then(() => console.log('Upgraded DB Schema Successfully'));
     } catch (err) {
-        console.error(`Failed to upgrade DB schema to v2 due to ${err}`);
+        console.error(`Failed to upgrade DB schema due to ${err}`);
         throw err;
     }
 }
