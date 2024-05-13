@@ -167,6 +167,12 @@ function resultToIBook(toFormat: QueryResult) {
 
 //region middleware
 
+/**
+ * Confirms a query parameter contains a string, a whole string, and nothing but the string
+ * @param req HTTP Request
+ * @param res HTTP Response
+ * @param next Next Middleware Function
+ */
 const checkQueryHasString = (req: Request, res: Response, next: NextFunction) => {
     if (validationFunctions.isStringProvided(req.query.q)) {
         next();
@@ -175,6 +181,12 @@ const checkQueryHasString = (req: Request, res: Response, next: NextFunction) =>
     }
 };
 
+/**
+ * Confirms a query is formatted correctly to perform a keyword search and does not contain additional symbols.
+ * @param req HTTP Request
+ * @param res HTTP Response
+ * @param next Next Middleware Function
+ */
 const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
     const queryPattern = /^[a-zA-Z0-9\s"-]+$/gm;
     console.log(`query: ${req.query.q}`);
