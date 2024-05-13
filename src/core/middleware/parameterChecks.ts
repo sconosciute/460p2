@@ -32,6 +32,8 @@ const validOffset = (req: Request, res: Response, next: NextFunction) => {
     if (isNumberProvided(offset)) {
         offset = Math.abs(Number(offset));
         if (offset == 0) offset = 15;
+        req.query.offset = offset.toString();
+        next();
     } else {
         console.error('The offset is not numeric.');
         res.status(400).send({
@@ -39,8 +41,6 @@ const validOffset = (req: Request, res: Response, next: NextFunction) => {
                 'The offset you passed through the request is not numberic.',
         });
     }
-    req.query.offset = offset.toString();
-    next();
 };
 
 /**
@@ -58,7 +58,7 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
     if (isNumberProvided(temp)) {
         const offset = Math.abs(Number(req.query.offset));
         page = Number(temp);
-        const theQuery = `SELECT COUNT(id) AS count FROM books GROUP BY id`;
+        const theQuery = `SELECT COUNT(id) AS count FROM books`;
         pool.query(theQuery)
             .then((result) => {
                 const maxPage: number = Math.ceil(
@@ -66,6 +66,8 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
                 );
                 if (page > maxPage) page = maxPage;
                 else if (page < 1) page = 1;
+                req.query.page = page.toString();
+                next();
             })
             .catch((error) => {
                 console.error(
@@ -83,8 +85,6 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
                 'The page number you passed through the request is not numberic.',
         });
     }
-    req.query.page = page.toString();
-    next();
 };
 
 /**
@@ -106,8 +106,9 @@ const validISBN = (req: Request, res: Response, next: NextFunction) => {
             message:
                 'The ISBN you passed through the request is not 13 digits.',
         });
+    } else {
+        next();
     }
-    next();
 };
 
 const parameterChecks = {

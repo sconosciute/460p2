@@ -1,16 +1,148 @@
 //express is the framework we're going to use to handle requests
-import express, { Request, Response, Router } from 'express';
+import express, { NextFunction, Request, Response, Router } from 'express';
 //Access the connection to Postgres Database
 import { pool } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
-import { IBook } from '../../core/models';
-import { QueryResult } from 'pg';
+import { IBook, IRatings, IUrlIcon } from '../../core/models';
 
 const bookRouter: Router = express.Router();
 
 const validSort = parameterChecks.validSort;
 const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
+const validISBN = parameterChecks.validISBN;
+
+const getBooksAndAuthorsQuery = `
+SELECT * FROM books INNER JOIN 
+    (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
+        authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
+    ON (books.id = author_table.book)`;
+
+/**
+ * @api {post} /books Request to add a new book
+ *
+ * @apiDescription This api allows an authenticated user with the correct permission to add a new book in the database,
+ * with all the required information.
+ *
+ * @apiName PostAddBook
+ * @apiGroup books
+ *
+ * @apiBody {number} id The added book's id
+ * @apiBody {number} isbn-13 An identifier of the book
+ * @apiBody {string} authors The creator of the book can have more than one
+ * @apiBody {number} publication year A number that shows when the book was published
+ * @apiBody {string} original_title Name the book was first given
+ * @apiBody {string} title Another name for the book
+ * @apiBody {number} average rating The average amount of rate from 1-5
+ * @apiBody {number} ratings count total amount of time the book was rated
+ * @apiBody {number} rating_1 The amount of times book was rated 1
+ * @apiBody {number} rating_2 The amount of times book was rated 2
+ * @apiBody {number} rating_3 The amount of times book was rated 3
+ * @apiBody {number} rating_4 The amount of times book was rated 4
+ * @apiBody {number} rating_5 The amount of times book was rated 5
+ * @apiBody {string} image_url The url of the image
+ * @apiBody {string} small_image_url The url of the small image of the book
+ *
+ *
+ *
+ * @apiSuccess (201) {String} Success new book was added to the database
+ *
+ * @apiError (400: missing parameter) {String} message "Required information for new book is missing"
+ * @apiError (403: unauthorized user) {String} message "You do not have access to add book"
+ * @apiError (401: permission denied) {String} message "You do not have permission to add book"
+ */
+
+/**
+ * @api {delete} /books Request to delete a book
+ *
+ * @apiDescription Deletes a single book from the database by ID or the ISBN.
+ *
+ * @apiName DeleteBooks
+ * @apiGroup books
+ *
+ * @apiParam {Number} id The primary key ID of the book to delete
+ * @apiParam {Number} isbn The isbn of the book to delete
+ *
+ * @apiSuccess (200) {String} Success book was deleted!
+ *
+ * @apiError (404) {String} message "No books found matching the criteria"
+ * @apiError (401) {String} message "No permission to delete books"
+ * @apiError (403) {String} message "Unauthorized user"
+ */
+
+/**
+ * @api {delete} /books Request to delete a range of books
+ *
+ * @apiDescription This deletes a range of books within a minimum book ID and maximum book ID
+ * inclusively.
+ *
+ * @apiName DeleteRangeBooks
+ * @apiGroup books
+ *
+ * @apiParam {Number} min_id The minimum ID of the range
+ * @apiParam {Number} max_id the maximum ID of the range
+ *
+ * @apiSuccess (200) {String} Success: Range of books deleted!
+ *
+ * @apiError (404) {String} message "No books found matching the criteria"
+ * @apiError (401) {String} message "No permission to delete books"
+ * @apiError (403) {String} message "Unauthorized user"
+ */
+
+/**
+ * Get the result by executing the given query and send a list of IBook as response.
+ *
+ * @param theQuery The query to execute.
+ * @param res The HTTP response.
+ * @param allBooks Whether the query is retrieving all books.
+ */
+const queryAndResponse = (
+    theQuery: string,
+    res: Response,
+    allBooks: boolean
+) => {
+    pool.query(theQuery)
+        .then((result) => {
+            if (allBooks && result.rowCount == 0) {
+                // Try to get all books but no book found.
+                res.status(400).send({
+                    message: 'Unexpected error - cannot retrieve books.',
+                });
+            } else {
+                // Send the result
+                res.status(200).send({
+                    books: result.rows.map((row) => {
+                        return <IBook>{
+                            isbn13: Number(row.isbn13),
+                            authors: row.authors,
+                            publication: Number(row.publication_year),
+                            original_title: row.original_title,
+                            title: row.title,
+                            ratings: <IRatings>{
+                                average: Number(row.rating_avg),
+                                count: Number(row.rating_count),
+                                rating_1: Number(row.rating_1_star),
+                                rating_2: Number(row.rating_2_star),
+                                rating_3: Number(row.rating_3_star),
+                                rating_4: Number(row.rating_4_star),
+                                rating_5: Number(row.rating_5_star),
+                            },
+                            icons: <IUrlIcon>{
+                                large: row.image_url,
+                                small: row.image_small_url,
+                            },
+                        };
+                    }),
+                });
+            }
+        })
+        .catch((error) => {
+            console.error('DB server error: ' + error);
+            res.status(500).send({
+                message: 'Server error.',
+            });
+        });
+};
 
 /**
  * @api {get} /books/all/title
@@ -32,8 +164,8 @@ const validPage = parameterChecks.validPage;
  *
  * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
  * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Database error occurs while retrieving books."
- * @apiError (500 Internal Server Error) {string} message "Server error."
+ * @apiError (400 No book found) {string} message "Unexpcted error - cannot retrieve books."
+ * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
     '/all/title',
@@ -41,115 +173,13 @@ bookRouter.get(
     validOffset,
     validPage,
     (req: Request, res: Response) => {
-        // Query used to retrieve all books
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
-        const getBooks = `SELECT *
-                          FROM books
-                                   INNER JOIN
-                               (SELECT book, STRING_AGG(authors.name, ', ') AS authors
-                                FROM book_author
-                                         INNER JOIN authors ON (authors.id = book_author.author)
-                                GROUP BY book) AS author_table
-                               ON (books.id = author_table.book)
-                          ORDER BY title ${req.query.sort}
-                          OFFSET $1 LIMIT $2;`;
-        const values = [offset * (page - 1), offset];
-
-        pool.query(getBooks, values)
-            .then((result: QueryResult<IBook>) => {
-                if (result.rowCount > 0) {
-                    res.status(200).send({
-                        books: result.rows.map((row: IBook) => row as IBook),
-                    });
-                } else {
-                    console.error('Error occurs while retrieving books.');
-                    res.status(400).send({
-                        message: 'Error occurs while retrieving books.',
-                    });
-                }
-            })
-            .catch((error) => {
-                console.error('DB query error when retrieving all books.');
-                console.error(error);
-                res.status(500).send({
-                    message: 'Server error.',
-                });
-            });
-    });
-
-/*
-* @api {post} /books Request to add a new book
-*
-* @apiDescription This api allows an authenticated user with the correct permission to add a new book in the database,
-* with all the required information.
-*
-* @apiName PostAddBook
-* @apiGroup books
-*
-* @apiBody {number} id The added book's id
-* @apiBody {number} isbn-13 An identifier of the book
-* @apiBody {string} authors The creator of the book can have more than one
-* @apiBody {number} publication year A number that shows when the book was published
-* @apiBody {string} original_title Name the book was first given
-* @apiBody {string} title Another name for the book
-* @apiBody {number} average rating The average amount of rate from 1-5
-* @apiBody {number} ratings count total amount of time the book was rated
-* @apiBody {number} rating_1 The amount of times book was rated 1
-* @apiBody {number} rating_2 The amount of times book was rated 2
-* @apiBody {number} rating_3 The amount of times book was rated 3
-* @apiBody {number} rating_4 The amount of times book was rated 4
-* @apiBody {number} rating_5 The amount of times book was rated 5
-* @apiBody {string} image_url The url of the image
-* @apiBody {string} small_image_url The url of the small image of the book
-*
-*
-*
-* @apiSuccess (201) {String} Success new book was added to the database
-*
-* @apiError (400: missing parameter) {String} message "Required information for new book is missing"
-* @apiError (403: unauthorized user) {String} message "You do not have access to add book"
-* @apiError (401: permission denied) {String} message "You do not have permission to add book"
-*/
-
-
-/*
-* @api {delete} /books Request to delete a book
-*
-* @apiDescription Deletes a single book from the database by ID or the ISBN.
-*
-* @apiName DeleteBooks
-* @apiGroup books
-*
-* @apiParam {Number} id The primary key ID of the book to delete
-* @apiParam {Number} isbn The isbn of the book to delete
-*
-* @apiSuccess (200) {String} Success book was deleted!
-*
-* @apiError (404) {String} message "No books found matching the criteria"
-* @apiError (401) {String} message "No permission to delete books"
-* @apiError (403) {String} message "Unauthorized user"
-*/
-
-/*
-* @api {delete} /books Request to delete a range of books
-*
-* @apiDescription This deletes a range of books within a minimum book ID and maximum book ID
-* inclusively.
-*
-* @apiName DeleteRangeBooks
-* @apiGroup books
-*
-* @apiParam {Number} min_id The minimum ID of the range
-* @apiParam {Number} max_id the maximum ID of the range
-*
-* @apiSuccess (200) {String} Success: Range of books deleted!
-*
-* @apiError (404) {String} message "No books found matching the criteria"
-* @apiError (401) {String} message "No permission to delete books"
-* @apiError (403) {String} message "Unauthorized user"
-*/
-
+        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY title ${req.query.sort} 
+            OFFSET ${offset * (page - 1)} LIMIT ${offset};`;
+        queryAndResponse(getBooks, res, true);
+    }
+);
 
 /**
  * @api {get} /books/all/author
@@ -172,9 +202,22 @@ bookRouter.get(
  *
  * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
  * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Database error occurs while retrieving books."
- * @apiError (500 Internal Server Error) {string} message "Server error."
+ * @apiError (400 No book found) {string} message "Unexpcted error - cannot retrieve books.."
+ * @apiError (500 Internal server error) {string} message "Server error."
  */
+bookRouter.get(
+    '/all/author',
+    validSort,
+    validOffset,
+    validPage,
+    (req: Request, res: Response) => {
+        const offset = Number(req.query.offset);
+        const page = Number(req.query.page);
+        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY author_table.authors ${req.query.sort} 
+            OFFSET ${offset * (page - 1)} LIMIT ${offset};`;
+        queryAndResponse(getBooks, res, true);
+    }
+);
 
 /**
  * @api {get} /books/title
@@ -188,11 +231,34 @@ bookRouter.get(
  *
  * @apiQuery {string} title The title of the book to search for.
  *
- * @apiSuccess (200 Success) {IBook[]} books A list of books with title that are similar to the title to search for.
+ * @apiSuccess (200 Success) {IBook[]} books A list of books with title that are similar to the title to
+ * search for.
  *
- * @apiError (400 Bad request) {String} message Missing parameter - Title required.
- * @apiError (500 Internal Server Error) {string} message "Server error."
+ * @apiError (400 Missing Parameter) {String} message "Missing parameter - title required."
+ * @apiError (500 Internal server error) {string} message "Server error."
  */
+bookRouter.get(
+    '/title',
+    (req: Request, res: Response, next: NextFunction) => {
+        // Send 400 if title of null or only contains white space
+        if (!req.query.title || String(req.query.title).trim().length == 0) {
+            console.error('Missing parameter - title required.');
+            res.status(400).send({
+                message: 'Missing parameter - title required.',
+            });
+        } else {
+            next();
+        }
+    },
+    (req: Request, res: Response) => {
+        const getBooks = `${getBooksAndAuthorsQuery} 
+            WHERE title LIKE '${req.query.title}' 
+            OR title LIKE '${String(req.query.title).charAt(0).toUpperCase() + String(req.query.title).slice(1)}' 
+            OR DIFFERENCE(title, '${req.query.title}') > 2 
+            ORDER BY SIMILARITY(title, '${req.query.title}') DESC`;
+        queryAndResponse(getBooks, res, false);
+    }
+);
 
 /**
  * @api {get} /books/isbn
@@ -210,9 +276,27 @@ bookRouter.get(
  *
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not 13 digits long."
- * @apiError (400 Bad request) {String} message Missing parameter - ISBN required.
- * @apiError (500 Internal Server Error) {string} message "Server error."
+ * @apiError (400 Missing Parameter) {String} message "Missing parameter - ISBN required."
+ * @apiError (500 Internal server error) {string} message "Server error."
  */
+bookRouter.get(
+    '/isbn',
+    (req: Request, res: Response, next: NextFunction) => {
+        if (!req.query.isbn || String(req.query.isbn).trim().length == 0) {
+            console.error('Missing parameter - ISBN required.');
+            res.status(400).send({
+                message: 'Missing parameter - ISBN required.',
+            });
+        } else {
+            next();
+        }
+    },
+    validISBN,
+    (req: Request, res: Response) => {
+        const getBooks = `${getBooksAndAuthorsQuery} WHERE isbn13 = ${req.query.isbn}`;
+        queryAndResponse(getBooks, res, false);
+    }
+);
 
 /**
  * @api {get} kwSearch
