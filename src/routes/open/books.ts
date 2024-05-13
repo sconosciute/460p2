@@ -176,7 +176,7 @@ const checkQueryHasString = (req: Request, res: Response, next: NextFunction) =>
 };
 
 const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
-    const queryPattern = /^[a-zA-Z0-9\s]+$/gm;
+    const queryPattern = /^[a-zA-Z0-9\s"-]+$/gm;
     console.log(`query: ${req.query.q}`);
     const check = (<string>req.query.q).match(queryPattern);
     console.dir(check);
@@ -383,7 +383,7 @@ bookRouter.get(
  * @apiName getKwSearch
  * @apiGroup open
  *
- * @apiParam {string} q A "+" plus sign separated list of keywords to search for.
+ * @apiParam {string} q A web search formatted query. May use - to exclude terms or place words in quotes to require an exact match. ex: This is a "valid" -query
  *
  * @apiSuccess (200) {Array<IBook>} returns an array containing all matching books
  * @apiSuccess (204) {String} The query was successfully run, but no books were found.
@@ -395,15 +395,13 @@ bookRouter.get(
 bookRouter.get('/search', checkQueryHasString,
     checkQueryFormat,
     async (req: Request, res: Response, next: NextFunction) => {
-    const ws = /(\s+)/gm;
-    const keywords = (<string>req.query.q).replace(ws, ' & ');
-        const query = `SELECT *, ts_rank(kw_vec, to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
+        const query = `SELECT *, ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
                        FROM books
-                       WHERE kw_vec @@ to_tsquery('english', $1)
+                       WHERE kw_vec @@ websearch_to_tsquery('english', $1)
                        ORDER BY rank DESC`;
-        const ans = await pool.query(query, [keywords]);
+        const ans = await pool.query(query, [req.query.q]);
 
-        res.send(resultToIBook(ans));
+        res.setHeader('Content-Type', 'application/json').send(resultToIBook(ans));
 
     });
 
