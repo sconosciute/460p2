@@ -1,9 +1,10 @@
 //express is the framework we're going to use to handle requests
 import express, { NextFunction, Request, Response, Router } from 'express';
 //Access the connection to Postgres Database
-import { pool } from '../../core/utilities';
+import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IBook, IRatings, IUrlIcon } from '../../core/models';
+import { QueryResult } from 'pg';
 
 const bookRouter: Router = express.Router();
 
@@ -13,10 +14,15 @@ const validPage = parameterChecks.validPage;
 const validISBN = parameterChecks.validISBN;
 
 const getBooksAndAuthorsQuery = `
-SELECT * FROM books INNER JOIN 
-    (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
-        authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
-    ON (books.id = author_table.book)`;
+    SELECT *
+    FROM books
+             INNER JOIN
+         (SELECT book, STRING_AGG(authors.name, ', ') AS authors
+          FROM book_author
+                   INNER JOIN
+               authors ON (authors.id = book_author.author)
+          GROUP BY book) AS author_table
+         ON (books.id = author_table.book)`;
 
 //region Post/Delete
 /**
@@ -36,11 +42,11 @@ SELECT * FROM books INNER JOIN
  * @apiBody {string} title Another name for the book
  * @apiBody {number} average rating The average amount of rate from 1-5
  * @apiBody {number} ratings count total amount of time the book was rated
- * @apiBody {number} rating_1 The amount of times book was rated 1
- * @apiBody {number} rating_2 The amount of times book was rated 2
- * @apiBody {number} rating_3 The amount of times book was rated 3
- * @apiBody {number} rating_4 The amount of times book was rated 4
- * @apiBody {number} rating_5 The amount of times book was rated 5
+ * @apiBody {number} rating_1 Number of 1-star rating on this book.
+ * @apiBody {number} rating_2 Number of 2-star rating on this book.
+ * @apiBody {number} rating_3 Number of 3-star rating on this book.
+ * @apiBody {number} rating_4 Number of 4-star rating on this book.
+ * @apiBody {number} rating_5 Number of 5-star rating on this book.
  * @apiBody {string} image_url The url of the image
  * @apiBody {string} small_image_url The url of the small image of the book
  *
@@ -104,40 +110,19 @@ SELECT * FROM books INNER JOIN
 const queryAndResponse = (
     theQuery: string,
     res: Response,
-    allBooks: boolean
+    allBooks: boolean,
 ) => {
     pool.query(theQuery)
         .then((result) => {
             if (allBooks && result.rowCount == 0) {
                 // Try to get all books but no book found.
-                res.status(400).send({
-                    message: 'Unexpected error - cannot retrieve books.',
+                res.status(500).send({
+                    message: 'Server error - Contact Support.',
                 });
             } else {
                 // Send the result
                 res.status(200).send({
-                    books: result.rows.map((row) => {
-                        return <IBook>{
-                            isbn13: Number(row.isbn13),
-                            authors: row.authors,
-                            publication: Number(row.publication_year),
-                            original_title: row.original_title,
-                            title: row.title,
-                            ratings: <IRatings>{
-                                average: Number(row.rating_avg),
-                                count: Number(row.rating_count),
-                                rating_1: Number(row.rating_1_star),
-                                rating_2: Number(row.rating_2_star),
-                                rating_3: Number(row.rating_3_star),
-                                rating_4: Number(row.rating_4_star),
-                                rating_5: Number(row.rating_5_star),
-                            },
-                            icons: <IUrlIcon>{
-                                large: row.image_url,
-                                small: row.image_small_url,
-                            },
-                        };
-                    }),
+                    books: resultToIBook(result),
                 });
             }
         })
@@ -149,7 +134,60 @@ const queryAndResponse = (
         });
 };
 
+/**
+ * Takes in a QueryResult containing complete book records and formats as IBook array.
+ * @param toFormat
+ */
+function resultToIBook(toFormat: QueryResult) {
+    return toFormat.rows.map((row) => {
+        return <IBook>{
+            isbn13: Number(row.isbn13),
+            authors: row.authors,
+            publication: Number(row.publication_year),
+            original_title: row.original_title,
+            title: row.title,
+            ratings: <IRatings>{
+                average: Number(row.rating_avg),
+                count: Number(row.rating_count),
+                rating_1: Number(row.rating_1_star),
+                rating_2: Number(row.rating_2_star),
+                rating_3: Number(row.rating_3_star),
+                rating_4: Number(row.rating_4_star),
+                rating_5: Number(row.rating_5_star),
+            },
+            icons: <IUrlIcon>{
+                large: row.image_url,
+                small: row.image_small_url,
+            },
+        };
+    });
+}
+
 //endregion helpers
+
+//region middleware
+
+const checkQueryHasString = (req: Request, res: Response, next: NextFunction) => {
+    if (validationFunctions.isStringProvided(req.query.q)) {
+        next();
+    } else {
+        res.status(400).send('No query provided to search for');
+    }
+};
+
+const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
+    const queryPattern = /^[a-zA-Z0-9\s]+$/gm;
+    console.log(`query: ${req.query.q}`);
+    const check = (<string>req.query.q).match(queryPattern);
+    console.dir(check);
+    if (check?.length != 1) {
+        res.status(400).send('Malformed query\nQuery must be a single + separated list of keywords');
+    } else {
+        next();
+    }
+};
+
+//endregion middleware
 
 //region getAll
 
@@ -173,7 +211,7 @@ const queryAndResponse = (
  *
  * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
  * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Unexpcted error - cannot retrieve books."
+ * @apiError (400 No book found) {string} message "Unexpected error - cannot retrieve books."
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
@@ -187,7 +225,7 @@ bookRouter.get(
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY title ${req.query.sort} 
             OFFSET ${offset * (page - 1)} LIMIT ${offset};`;
         queryAndResponse(getBooks, res, true);
-    }
+    },
 );
 
 /**
@@ -211,7 +249,7 @@ bookRouter.get(
  *
  * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
  * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Unexpcted error - cannot retrieve books.."
+ * @apiError (400 No book found) {string} message "Unexpected error - cannot retrieve books."
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
@@ -225,7 +263,7 @@ bookRouter.get(
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY author_table.authors ${req.query.sort} 
             OFFSET ${offset * (page - 1)} LIMIT ${offset};`;
         queryAndResponse(getBooks, res, true);
-    }
+    },
 );
 
 /**
@@ -296,7 +334,7 @@ bookRouter.get(
             OR DIFFERENCE(title, '${req.query.title}') > 2 
             ORDER BY SIMILARITY(title, '${req.query.title}') DESC`;
         queryAndResponse(getBooks, res, false);
-    }
+    },
 );
 
 /**
@@ -334,18 +372,18 @@ bookRouter.get(
     (req: Request, res: Response) => {
         const getBooks = `${getBooksAndAuthorsQuery} WHERE isbn13 = ${req.query.isbn}`;
         queryAndResponse(getBooks, res, false);
-    }
+    },
 );
 
 /**
  * @api {get} kwSearch
  *
- * @apiDescription Performs a keyword search of all books in the database by title and author.
+ * @apiDescription Performs a keyword search of all books in the database checking for title or author matches. May only contain alphanumeric characters, no white space or special characters. ex: "this+is+a+valid+query".
  *
- * @apiName prefer getKwSearch
+ * @apiName getKwSearch
  * @apiGroup open
  *
- * @apiParam {string} q The keywords to search the database for.
+ * @apiParam {string} q A "+" plus sign separated list of keywords to search for.
  *
  * @apiSuccess (200) {Array<IBook>} returns an array containing all matching books
  * @apiSuccess (204) {String} The query was successfully run, but no books were found.
@@ -354,11 +392,20 @@ bookRouter.get(
  * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
  *
  */
-bookRouter.get('/search', (req: Request, res: Response) => {
-    console.log('Somebody tried to search!');
-    res.status(501).send();
-});
+bookRouter.get('/search', checkQueryHasString,
+    checkQueryFormat,
+    async (req: Request, res: Response, next: NextFunction) => {
+    const ws = /(\s+)/gm;
+    const keywords = (<string>req.query.q).replace(ws, ' & ');
+        const query = `SELECT *, ts_rank(kw_vec, to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
+                       FROM books
+                       WHERE kw_vec @@ to_tsquery('english', $1)
+                       ORDER BY rank DESC`;
+        const ans = await pool.query(query, [keywords]);
 
+        res.send(resultToIBook(ans));
+
+    });
 
 
 /**
