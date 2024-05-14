@@ -17,10 +17,9 @@ export const checkParamsIdToJwtId = (
 export const hasPermissions = (permissions) => {
     return (request, response, next) => {
 
-        //Not sure if this is the correct call for retrieving from the database?
-        const userRole = request.user.role;
+        const query = 'SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_idWHERE account_id = 2';
 
-        if (permissions.includes(userRole)) {
+        if (permissions.includes(query)) {
             next();
         } else {
             response.status(401).send({

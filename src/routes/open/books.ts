@@ -13,6 +13,7 @@ const validSort = parameterChecks.validSort;
 const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
 
+
 /**
  * @api {get} /books/all/title
  *
@@ -85,7 +86,7 @@ bookRouter.get(
 * @apiDescription This api allows an authenticated user with the correct permission to add a new book in the database,
 * with all the required information.
 *
-* @apiName PostAddBook
+* @apiName addBook
 * @apiGroup books
 *
 * @apiBody {number} id The added book's id
@@ -114,15 +115,15 @@ bookRouter.get(
 */
 
 
+
 /*
 * @api {delete} /books Request to delete a book
 *
 * @apiDescription Deletes a single book from the database by ID or the ISBN.
 *
-* @apiName DeleteBooks
+* @apiName deleteBook
 * @apiGroup books
 *
-* @apiParam {Number} id The primary key ID of the book to delete
 * @apiParam {Number} isbn The isbn of the book to delete
 *
 * @apiSuccess (200) {String} Success book was deleted!
@@ -131,23 +132,25 @@ bookRouter.get(
 * @apiError (401) {String} message "No permission to delete books"
 * @apiError (403) {String} message "Unauthorized user"
 */
+//There is duplicate ISBN numbers in the database which will cause to crash!!!!!
 bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextFunction) => {
-
-    //Was worked on using the old database now causes conflicts with schema v2 need to change names
-    const query = 'DELETE FROM books WHERE isbn13 = ' + req.params.isbn +';';
-
-
-    pool.query(query)
-        .then((result) => {
+    const isbn = req.params.isbn;
+    // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
+    pool.query('DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
+        .then(() => {
+            return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
+        })
+        .then(() => {
             res.status(200).send({
-                message:(`Deleted book.`),
+                message: 'Deleted book.'
             });
         })
         .catch((e) => {
-            console.log(`Server failed to delete books due to ${e}`);
+            console.error(`Server failed to delete book due to ${e}`);
             res.status(500).send('Server error, so sorry!');
         });
 });
+
 
 /*
 * @api {delete} /books Request to delete a range of books
@@ -155,7 +158,7 @@ bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextF
 * @apiDescription This deletes a range of books within a minimum book ID and maximum book ID
 * inclusively.
 *
-* @apiName DeleteRangeBooks
+* @apiName deleteRangeBooks
 * @apiGroup books
 *
 * @apiParam {Number} min_id The minimum ID of the range
@@ -167,8 +170,30 @@ bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextF
 * @apiError (401) {String} message "No permission to delete books"
 * @apiError (403) {String} message "Unauthorized user"
 */
+bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
+    const { min_id, max_id } = req.params;
 
 
+    // Delete related records in the book_author table first
+    const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
+
+
+    pool.query(query, [min_id, max_id])
+        .then(() => {
+            // Now can delete the book without breaking primary & foreign keys
+            const deleteBooksQuery = 'DELETE FROM books WHERE id >= $1 AND id <= $2;';
+            return pool.query(deleteBooksQuery, [min_id, max_id]);
+        })
+        .then(() => {
+            res.status(200).send({
+                message: 'Deleted range of books.'
+            });
+        })
+        .catch((e) => {
+            console.error(e);
+            res.status(500).send('Server error, so sorry!');
+        });
+});
 
 /**
  * @api {get} /books/all/author
