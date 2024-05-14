@@ -12,17 +12,13 @@ const validSort = parameterChecks.validSort;
 const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
 const validISBN = parameterChecks.validISBN;
+const validTitle = parameterChecks.validTitle;
 
 const getBooksAndAuthorsQuery = `
-    SELECT *
-    FROM books
-             INNER JOIN
-         (SELECT book, STRING_AGG(authors.name, ', ') AS authors
-          FROM book_author
-                   INNER JOIN
-               authors ON (authors.id = book_author.author)
-          GROUP BY book) AS author_table
-         ON (books.id = author_table.book)`;
+    SELECT * FROM books INNER JOIN 
+    (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
+        authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
+    ON (books.id = author_table.book)`;
 
 //region Post/Delete
 /**
@@ -148,10 +144,11 @@ bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Respo
  */
 const queryAndResponse = (
     theQuery: string,
+    values: string[],
     res: Response,
-    allBooks: boolean,
+    allBooks: boolean
 ) => {
-    pool.query(theQuery)
+    pool.query(theQuery, values)
         .then((result) => {
             if (allBooks && result.rowCount == 0) {
                 // Try to get all books but no book found.
@@ -212,7 +209,11 @@ function resultToIBook(toFormat: QueryResult) {
  * @param res HTTP Response
  * @param next Next Middleware Function
  */
-const checkQueryHasString = (req: Request, res: Response, next: NextFunction) => {
+const checkQueryHasString = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     if (validationFunctions.isStringProvided(req.query.q)) {
         next();
     } else {
@@ -232,7 +233,9 @@ const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
     const check = (<string>req.query.q).match(queryPattern);
     console.dir(check);
     if (check?.length != 1) {
-        res.status(400).send('Malformed query\nQuery must be a single + separated list of keywords');
+        res.status(400).send(
+            'Malformed query\nQuery must be a single + separated list of keywords'
+        );
     } else {
         next();
     }
@@ -273,10 +276,14 @@ bookRouter.get(
     (req: Request, res: Response) => {
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
-        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY title ${req.query.sort} 
-            OFFSET ${offset * (page - 1)} LIMIT ${offset};`;
-        queryAndResponse(getBooks, res, true);
-    },
+        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
+        const values = [
+            'title ' + String(req.query.sort),
+            String(offset * (page - 1)),
+            String(req.query.offset),
+        ];
+        queryAndResponse(getBooks, values, res, true);
+    }
 );
 
 /**
@@ -311,10 +318,14 @@ bookRouter.get(
     (req: Request, res: Response) => {
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
-        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY author_table.authors ${req.query.sort} 
-            OFFSET ${offset * (page - 1)} LIMIT ${offset};`;
-        queryAndResponse(getBooks, res, true);
-    },
+        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
+        const values = [
+            'author_table.author ' + String(req.query.sort),
+            String(offset * (page - 1)),
+            String(req.query.offset),
+        ];
+        queryAndResponse(getBooks, values, res, true);
+    }
 );
 
 /**
@@ -348,82 +359,86 @@ bookRouter.get(
 //region searches
 
 /**
- * @api {get} /books/search/title
+ * @api {get} /books/search
  *
- * @apiDescription Request to retrieve a list of books by title. It is possible that no book will be
- * retrieved because no match is found, or multiple books are retrieved because more than one match
- * is found. The title can be found by both title and original title.
+ * @apiDescription Request to retrieve a list of books that match all the query parameters entered.
+ * If parameter q is entered, it means it will search by keyword and all other parameters will not
+ * make effect. It is possible that no book will be retrieved because no match is found, or multiple
+ * books are retrieved because more than one match is found. Though query parameters are optional, at
+ * least one parameter must be entered.
  *
- * @apiName SearchByTitle
+ * @apiName SearchByParameter
  * @apiGroup Books
  *
- * @apiQuery {string} title The title of the book to search for.
+ * @apiParam {string} [q] The keywords to search the database for.
+ * @apiQuery {string} [title] The title of the book to search for.
+ * @apiQuery {number} [isbn] The ISBN of the book to search for.
+ * @apiQuery {string} [author] The author's first and/or last name.
+ * @apiQuery {Number} [min] The minimum rating.
+ * @apiQuery {Number} [max] The maximum rating.
  *
- * @apiSuccess (200 Success) {IBook[]} books A list of books with title that are similar to the title to
- * search for.
+ * @apiSuccess (200 Success) {IBook[]} books A list of books match the parameters entered.
  *
- * @apiError (400 Missing Parameter) {String} message "Missing parameter - title required."
- * @apiError (500 Internal server error) {string} message "Server error."
- */
-bookRouter.get(
-    '/search/title',
-    (req: Request, res: Response, next: NextFunction) => {
-        // Send 400 if title of null or only contains white space
-        if (!req.query.title || String(req.query.title).trim().length == 0) {
-            console.error('Missing parameter - title required.');
-            res.status(400).send({
-                message: 'Missing parameter - title required.',
-            });
-        } else {
-            next();
-        }
-    },
-    (req: Request, res: Response) => {
-        const getBooks = `${getBooksAndAuthorsQuery} 
-            WHERE title LIKE '${req.query.title}' 
-            OR title LIKE '${String(req.query.title).charAt(0).toUpperCase() + String(req.query.title).slice(1)}' 
-            OR DIFFERENCE(title, '${req.query.title}') > 2 
-            ORDER BY SIMILARITY(title, '${req.query.title}') DESC`;
-        queryAndResponse(getBooks, res, false);
-    },
-);
-
-/**
- * @api {get} /books/search/isbn
- *
- * @apiDescription Request to retrieve a list of books by ISBN. It is possible that no book will be
- * retrieved because no match is found, or multiple books are retrieved because more than one match
- * is found.
- *
- * @apiName SearchByISBN
- * @apiGroup Books
- *
- * @apiQuery {number} isbn The ISBN of the book to search for.
- *
- * @apiSuccess (200 Success) {IBook[]} books A list of books with given ISBN.
- *
+ * @apiError (400 No parameter) {string} message "Search required at least one query parameter."
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not 13 digits long."
- * @apiError (400 Missing Parameter) {String} message "Missing parameter - ISBN required."
+ * @apiError (400 Blank parameter) {String} message "Title cannot be blank."
+ * @apiError (400 Blank parameter) {String} message "ISBN cannot be blank."
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
-    '/search/isbn',
+    '/search',
     (req: Request, res: Response, next: NextFunction) => {
-        if (!req.query.isbn || String(req.query.isbn).trim().length == 0) {
-            console.error('Missing parameter - ISBN required.');
-            res.status(400).send({
-                message: 'Missing parameter - ISBN required.',
-            });
-        } else {
+        if (Object.keys(req.query).length > 0) {
             next();
+        } else {
+            res.status(400).send({
+                message: 'Search required at least one query parameter.',
+            });
         }
     },
-    validISBN,
-    (req: Request, res: Response) => {
-        const getBooks = `${getBooksAndAuthorsQuery} WHERE isbn13 = ${req.query.isbn}`;
-        queryAndResponse(getBooks, res, false);
+    (req: Request, res: Response, next: NextFunction) => {
+        if (req.query.q) {
+            // This is a placeholder for keyword search
+            console.log();
+        } else {
+            if (req.query.title) validTitle(req, res);
+            if (req.query.isbn) validISBN(req, res);
+        }
+        if (String(res.statusCode).startsWith('2')) next();
     },
+    (req: Request, res: Response) => {
+        let getBooks = `${getBooksAndAuthorsQuery} WHERE`;
+        let count = 1;
+        const values = [];
+        if (req.query.q) {
+            // This is a placeholder for keyword search
+            console.log();
+        } else {
+            // If isbn entered, append query for ISBN
+            if (req.query.isbn) {
+                if (!getBooks.endsWith('WHERE'))
+                    getBooks = getBooks.concat(' AND');
+                getBooks = getBooks.concat(` isbn13 = $${count++}`);
+                values.push(String(req.query.isbn));
+            }
+
+            // If title entered, append query for title
+            if (req.query.title) {
+                if (!getBooks.endsWith('WHERE'))
+                    getBooks = getBooks.concat(' AND');
+                getBooks = getBooks.concat(` title LIKE $${count++} 
+                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2`);
+                values.push(
+                    String(req.query.title),
+                    String(req.query.title).charAt(0).toUpperCase() +
+                        String(req.query.title).slice(1),
+                    String(req.query.title)
+                );
+            }
+        }
+        queryAndResponse(getBooks, values, res, false);
+    }
 );
 
 /**
@@ -443,7 +458,9 @@ bookRouter.get(
  * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
  *
  */
-bookRouter.get('/search', checkQueryHasString,
+bookRouter.get(
+    '/search',
+    checkQueryHasString,
     checkQueryFormat,
     async (req: Request, res: Response, next: NextFunction) => {
         const query = `SELECT *, ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
@@ -452,10 +469,11 @@ bookRouter.get('/search', checkQueryHasString,
                        ORDER BY rank DESC`;
         const ans = await pool.query(query, [req.query.q]);
 
-        res.setHeader('Content-Type', 'application/json').send(resultToIBook(ans));
-
-    });
-
+        res.setHeader('Content-Type', 'application/json').send(
+            resultToIBook(ans)
+        );
+    }
+);
 
 /**
  * @api {get} /books/search
