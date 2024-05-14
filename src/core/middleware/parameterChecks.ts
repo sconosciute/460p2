@@ -92,10 +92,14 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
  *
  * @param req The HTTP request.
  * @param res The HTTP response.
- * @param next The next function.
  */
-const validISBN = (req: Request, res: Response, next: NextFunction) => {
-    if (!isNumberProvided(req.query.isbn)) {
+const validISBN = (req: Request, res: Response) => {
+    if (req.query.isbn && String(req.query.isbn).trim().length == 0) {
+        console.error('ISBN cannot be blank.');
+        res.status(400).send({
+            message: 'ISBN cannot be blank.',
+        });
+    } else if (!isNumberProvided(req.query.isbn)) {
         console.error('The ISBN is not numberic.');
         res.status(400).send({
             message: 'The ISBN you passed through the request is not numberic.',
@@ -106,8 +110,21 @@ const validISBN = (req: Request, res: Response, next: NextFunction) => {
             message:
                 'The ISBN you passed through the request is not 13 digits.',
         });
-    } else {
-        next();
+    }
+};
+
+/**
+ * Checker whether the title is valid. If title is blank, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validTitle = (req: Request, res: Response) => {
+    if (req.query.title && String(req.query.title).trim().length == 0) {
+        console.error('Title cannot be blank.');
+        res.status(400).send({
+            message: 'Title cannot be blank.',
+        });
     }
 };
 
@@ -116,6 +133,7 @@ const parameterChecks = {
     validOffset,
     validPage,
     validISBN,
+    validTitle,
 };
 
 export { parameterChecks };
