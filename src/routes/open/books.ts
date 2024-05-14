@@ -365,6 +365,20 @@ bookRouter.get(
         } else {
             if (req.query.title) validTitle(req, res);
             if (req.query.isbn) validISBN(req, res);
+
+            // temporary checks -- will write into parameterChecks.ts
+            if(req.query.author && ((String(req.query.author).trim().length < 1))) {
+                res.status(400).send({}) // no chars in author name
+            }
+            if(req.query.min && isNaN(Number(req.query.min)) || Number(req.query.min) > 5) {
+                res.status(400).send({}) // min not a num or over 5
+            }
+            if(req.query.max && isNaN(Number(req.query.max)) || Number(req.query.max) < 0) {
+                res.status(400).send({}) // max not a num or less than 0
+            }
+            if(req.query.min && req.query.max && Number(req.query.min) > Number(req.query.max)) {
+                res.status(400).send({}) // min > max
+            }
         }
         if (String(res.statusCode).startsWith('2')) next();
     },
@@ -395,6 +409,37 @@ bookRouter.get(
                     String(req.query.title).charAt(0).toUpperCase() +
                         String(req.query.title).slice(1),
                     String(req.query.title)
+                );
+            }
+
+            // If author entered, append query for author
+            if (req.query.author) {
+                if (!getBooks.endsWith('WHERE'))
+                    getBooks = getBooks.concat(' AND');
+                getBooks = getBooks.concat(` authors LIKE $${count++}`);
+                values.push(
+                    String(`%` + req.query.author + `%`)
+                );
+            }
+
+            // If min and/or max entered, append query for min and/or max rating
+            if (req.query.min || req.query.max) {
+                if (!getBooks.endsWith('WHERE'))
+                    getBooks = getBooks.concat(' AND');
+
+                let lowerLimit = 0;
+                let upperLimit = 5;
+                if (req.query.min) {
+                    lowerLimit = Number(req.query.min);
+                }
+                if (req.query.max) {
+                    upperLimit = Number(req.query.max);
+                }
+
+                getBooks = getBooks.concat(` rating_avg BETWEEN $${count++} AND $${count++}`);
+                values.push(
+                    String(lowerLimit),
+                    String(upperLimit)
                 );
             }
         }
@@ -453,7 +498,22 @@ bookRouter.get(
  * @apiError (400: Bad request) {String} message Missing parameter - Author name required.
  * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
-// method goes here
+bookRouter.get('/search', (req: Request, res: Response) => {
+    const author = req.query.authorn;
+    const query = `SELECT * FROM books WHERE id IN ( SELECT book FROM book_author WHERE author IN ( SELECT authors.id FROM authors WHERE name LIKE $1 ) ) ORDER BY title asc;`;
+
+    // Currently does not work -- gives empty array of books.
+    pool.query(query, [`'%${author}%'`])
+        .then((result) => {
+            res.status(200).send({
+                books: result.rows.map((row: IBook) => row as IBook),
+            });
+        })
+        .catch((e) => {
+            console.log(`Server failed to get books due to ${e}`);
+            res.status(500).send('Error while performing database query.');
+        });
+});
 
 /**
  * @api {get} /books/search
@@ -474,7 +534,40 @@ bookRouter.get(
  *   required.
  * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
-// method goes here
+bookRouter.get('/search/rating', (req: Request, res: Response) => {
+    const min = Number(req.query.min);
+    const max = Number(req.query.max);
+    const query = `SELECT * FROM books WHERE rating_avg BETWEEN $1 AND $2 ORDER BY title ASC;`;
+
+    if(isNaN(min) || isNaN(max)) {
+        res.status(400).send({
+            message: 'Missing parameter(s) - Min and Max rating required.',
+        });
+    }
+
+    if(min < 0 || min > 5 || max < 0 || max > 5) {
+        res.status(400).send({
+            message: 'Min or max is out of bounds (must be [0, 5])',
+        });
+    }
+
+    if(min > max) {
+        res.status(400).send({
+            message: 'Min is greater than max.',
+        });
+    }
+
+    pool.query(query, [min, max])
+        .then((result) => {
+            res.status(200).send({
+                books: result.rows.map((row: IBook) => row as IBook),
+            });
+        })
+        .catch((e) => {
+            console.log(`Server failed to find books due to ${e}`);
+            res.status(500).send('Error while performing database query.');
+        });
+});
 
 /**
  * @api {put} /books
