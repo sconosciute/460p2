@@ -112,11 +112,9 @@ bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextF
  */
 bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
     const { min_id, max_id } = req.params;
-    // Delete related records in the book_author table first
     const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
     pool.query(query, [min_id, max_id])
         .then(() => {
-            // Now can delete the book without breaking primary & foreign keys
             const deleteBooksQuery = 'DELETE FROM books WHERE id >= $1 AND id <= $2;';
             return pool.query(deleteBooksQuery, [min_id, max_id]);
         })
