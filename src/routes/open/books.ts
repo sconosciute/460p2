@@ -8,6 +8,7 @@ import { QueryResult } from 'pg';
 
 const bookRouter: Router = express.Router();
 
+const validOrderby = parameterChecks.validOrderby;
 const validSort = parameterChecks.validSort;
 const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
@@ -244,16 +245,22 @@ const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
 //region getAll
 
 /**
- * @api {get} /books/all/title
+ * @api {get} /books/all
  *
- * @apiDescription Request to retrieve all information about all books in a certain page sorted by title.
- * The number of books display per page is specified by offset. The offset and page must be numeric. If a
- * negative or zero offset is entered, it will be converted to positive. If the page is less than 1 or greater
- * than the maximum number of page, it will redirect to the first or last page.
+ * @apiDescription Request to retrieve all information about all books in a certain page sorted by specified
+ * attribute. The number of books display per page is specified by offset. The offset and page must be numeric.
+ * If a negative or zero offset is entered, it will be converted to positive. If the page is less than 1 or
+ * greater than the maximum number of page, it will redirect to the first or last page.
+ * Available options for attributes:
+ * - title: title of the book
+ * - author: author name, if there're multiple authors, use the one the comes first in alphabet.
+ * - year: publication year, if same year, order by title.
  *
- * @apiName GetAllByTitle
+ * @apiName GetAllBooks
  * @apiGroup Books
  *
+ * @apiQuery {string="title","author","year"} orderby="title" The specified attribute of the book that it use
+ * sort books.
  * @apiQuery {string="asc","desc"} sort="asc" The order of the book. It can be "asc" for ascending or "desc"
  * for descending.
  * @apiQuery {number} offset=15 The number of books display per page.
@@ -267,58 +274,22 @@ const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
-    '/all/title',
+    '/all',
+    validOrderby,
     validSort,
     validOffset,
     validPage,
     (req: Request, res: Response) => {
+        const orderQuery = {
+            title: 'title ',
+            author: 'author_table.author ',
+            year: 'publication_year, title ',
+        };
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
         const values = [
-            'title ' + String(req.query.sort),
-            String(offset * (page - 1)),
-            String(req.query.offset),
-        ];
-        queryAndResponse(getBooks, values, res, true);
-    }
-);
-
-/**
- * @api {get} /books/all/author
- *
- * @apiDescription Request to retrieve all information about all books in a certain page sorted by author.
- * If a book has multiple authors, use the author name that comes first in alphabet. The number of books
- * display per page is specified by offset. The offset and page must be numeric. If a negative or zero offset is
- * entered, it will be converted to positive. If the page is less than 1 or greater than the maximum number
- * of page, it will redirect to the first or last page.
- *
- * @apiName GetAllByAuthor
- * @apiGroup Books
- *
- * @apiQuery {string="asc","desc"} sort="asc" The order of the book. It can be "asc" for ascending or "desc"
- * for descending.
- * @apiQuery {number} offset=15 The number of books display per page.
- * @apiQuery {number} page=1 The page number that starts from one.
- *
- * @apiSuccess (200 Success) {IBook[]} books A list of books in the given page.
- *
- * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
- * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Unexpected error - cannot retrieve books."
- * @apiError (500 Internal server error) {string} message "Server error."
- */
-bookRouter.get(
-    '/all/author',
-    validSort,
-    validOffset,
-    validPage,
-    (req: Request, res: Response) => {
-        const offset = Number(req.query.offset);
-        const page = Number(req.query.page);
-        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
-        const values = [
-            'author_table.author ' + String(req.query.sort),
+            orderQuery[String(req.query.orderby)] + String(req.query.sort),
             String(offset * (page - 1)),
             String(req.query.offset),
         ];
@@ -402,6 +373,20 @@ bookRouter.get(
         } else {
             if (req.query.title) validTitle(req, res);
             if (req.query.isbn) validISBN(req, res);
+
+            // temporary checks -- will write into parameterChecks.ts
+            if(req.query.author && ((String(req.query.author).trim().length < 1))) {
+                res.status(400).send({}) // no chars in author name
+            }
+            if(req.query.min && isNaN(Number(req.query.min)) || Number(req.query.min) > 5) {
+                res.status(400).send({}) // min not a num or over 5
+            }
+            if(req.query.max && isNaN(Number(req.query.max)) || Number(req.query.max) < 0) {
+                res.status(400).send({}) // max not a num or less than 0
+            }
+            if(req.query.min && req.query.max && Number(req.query.min) > Number(req.query.max)) {
+                res.status(400).send({}) // min > max
+            }
         }
         if (String(res.statusCode).startsWith('2')) next();
     },
@@ -425,13 +410,44 @@ bookRouter.get(
             if (req.query.title) {
                 if (!getBooks.endsWith('WHERE'))
                     getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` title LIKE $${count++} 
-                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2`);
+                getBooks = getBooks.concat(` (title LIKE $${count++} 
+                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2)`);
                 values.push(
                     String(req.query.title),
                     String(req.query.title).charAt(0).toUpperCase() +
                         String(req.query.title).slice(1),
                     String(req.query.title)
+                );
+            }
+
+            // If author entered, append query for author
+            if (req.query.author) {
+                if (!getBooks.endsWith('WHERE'))
+                    getBooks = getBooks.concat(' AND');
+                getBooks = getBooks.concat(` authors LIKE $${count++}`);
+                values.push(
+                    String(`%` + req.query.author + `%`)
+                );
+            }
+
+            // If min and/or max entered, append query for min and/or max rating
+            if (req.query.min || req.query.max) {
+                if (!getBooks.endsWith('WHERE'))
+                    getBooks = getBooks.concat(' AND');
+
+                let lowerLimit = 0;
+                let upperLimit = 5;
+                if (req.query.min) {
+                    lowerLimit = Number(req.query.min);
+                }
+                if (req.query.max) {
+                    upperLimit = Number(req.query.max);
+                }
+
+                getBooks = getBooks.concat(` rating_avg BETWEEN $${count++} AND $${count++}`);
+                values.push(
+                    String(lowerLimit),
+                    String(upperLimit)
                 );
             }
         }
@@ -490,7 +506,22 @@ bookRouter.get(
  * @apiError (400: Bad request) {String} message Missing parameter - Author name required.
  * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
-// method goes here
+bookRouter.get('/search', (req: Request, res: Response) => {
+    const author = req.query.authorn;
+    const query = `SELECT * FROM books WHERE id IN ( SELECT book FROM book_author WHERE author IN ( SELECT authors.id FROM authors WHERE name LIKE $1 ) ) ORDER BY title asc;`;
+
+    // Currently does not work -- gives empty array of books.
+    pool.query(query, [`'%${author}%'`])
+        .then((result) => {
+            res.status(200).send({
+                books: result.rows.map((row: IBook) => row as IBook),
+            });
+        })
+        .catch((e) => {
+            console.log(`Server failed to get books due to ${e}`);
+            res.status(500).send('Error while performing database query.');
+        });
+});
 
 /**
  * @api {get} /books/search
@@ -511,7 +542,40 @@ bookRouter.get(
  *   required.
  * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
-// method goes here
+bookRouter.get('/search/rating', (req: Request, res: Response) => {
+    const min = Number(req.query.min);
+    const max = Number(req.query.max);
+    const query = `SELECT * FROM books WHERE rating_avg BETWEEN $1 AND $2 ORDER BY title ASC;`;
+
+    if(isNaN(min) || isNaN(max)) {
+        res.status(400).send({
+            message: 'Missing parameter(s) - Min and Max rating required.',
+        });
+    }
+
+    if(min < 0 || min > 5 || max < 0 || max > 5) {
+        res.status(400).send({
+            message: 'Min or max is out of bounds (must be [0, 5])',
+        });
+    }
+
+    if(min > max) {
+        res.status(400).send({
+            message: 'Min is greater than max.',
+        });
+    }
+
+    pool.query(query, [min, max])
+        .then((result) => {
+            res.status(200).send({
+                books: result.rows.map((row: IBook) => row as IBook),
+            });
+        })
+        .catch((e) => {
+            console.log(`Server failed to find books due to ${e}`);
+            res.status(500).send('Error while performing database query.');
+        });
+});
 
 /**
  * @api {put} /books
