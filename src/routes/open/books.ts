@@ -8,6 +8,7 @@ import { QueryResult } from 'pg';
 
 const bookRouter: Router = express.Router();
 
+const validOrderby = parameterChecks.validOrderby;
 const validSort = parameterChecks.validSort;
 const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
@@ -207,16 +208,22 @@ const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
 //region getAll
 
 /**
- * @api {get} /books/all/title
+ * @api {get} /books/all
  *
- * @apiDescription Request to retrieve all information about all books in a certain page sorted by title.
- * The number of books display per page is specified by offset. The offset and page must be numeric. If a
- * negative or zero offset is entered, it will be converted to positive. If the page is less than 1 or greater
- * than the maximum number of page, it will redirect to the first or last page.
+ * @apiDescription Request to retrieve all information about all books in a certain page sorted by specified
+ * attribute. The number of books display per page is specified by offset. The offset and page must be numeric.
+ * If a negative or zero offset is entered, it will be converted to positive. If the page is less than 1 or
+ * greater than the maximum number of page, it will redirect to the first or last page.
+ * Available options for attributes:
+ * - title: title of the book
+ * - author: author name, if there're multiple authors, use the one the comes first in alphabet.
+ * - year: publication year, if same year, order by title.
  *
- * @apiName GetAllByTitle
+ * @apiName GetAllBooks
  * @apiGroup Books
  *
+ * @apiQuery {string="title","author","year"} orderby="title" The specified attribute of the book that it use
+ * sort books.
  * @apiQuery {string="asc","desc"} sort="asc" The order of the book. It can be "asc" for ascending or "desc"
  * for descending.
  * @apiQuery {number} offset=15 The number of books display per page.
@@ -230,58 +237,22 @@ const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
  * @apiError (500 Internal server error) {string} message "Server error."
  */
 bookRouter.get(
-    '/all/title',
+    '/all',
+    validOrderby,
     validSort,
     validOffset,
     validPage,
     (req: Request, res: Response) => {
+        const orderQuery = {
+            title: 'title ',
+            author: 'author_table.author ',
+            year: 'publication_year, title ',
+        };
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
         const values = [
-            'title ' + String(req.query.sort),
-            String(offset * (page - 1)),
-            String(req.query.offset),
-        ];
-        queryAndResponse(getBooks, values, res, true);
-    }
-);
-
-/**
- * @api {get} /books/all/author
- *
- * @apiDescription Request to retrieve all information about all books in a certain page sorted by author.
- * If a book has multiple authors, use the author name that comes first in alphabet. The number of books
- * display per page is specified by offset. The offset and page must be numeric. If a negative or zero offset is
- * entered, it will be converted to positive. If the page is less than 1 or greater than the maximum number
- * of page, it will redirect to the first or last page.
- *
- * @apiName GetAllByAuthor
- * @apiGroup Books
- *
- * @apiQuery {string="asc","desc"} sort="asc" The order of the book. It can be "asc" for ascending or "desc"
- * for descending.
- * @apiQuery {number} offset=15 The number of books display per page.
- * @apiQuery {number} page=1 The page number that starts from one.
- *
- * @apiSuccess (200 Success) {IBook[]} books A list of books in the given page.
- *
- * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
- * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Unexpected error - cannot retrieve books."
- * @apiError (500 Internal server error) {string} message "Server error."
- */
-bookRouter.get(
-    '/all/author',
-    validSort,
-    validOffset,
-    validPage,
-    (req: Request, res: Response) => {
-        const offset = Number(req.query.offset);
-        const page = Number(req.query.page);
-        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
-        const values = [
-            'author_table.author ' + String(req.query.sort),
+            orderQuery[String(req.query.orderby)] + String(req.query.sort),
             String(offset * (page - 1)),
             String(req.query.offset),
         ];
@@ -388,8 +359,8 @@ bookRouter.get(
             if (req.query.title) {
                 if (!getBooks.endsWith('WHERE'))
                     getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` title LIKE $${count++} 
-                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2`);
+                getBooks = getBooks.concat(` (title LIKE $${count++} 
+                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2)`);
                 values.push(
                     String(req.query.title),
                     String(req.query.title).charAt(0).toUpperCase() +

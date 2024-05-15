@@ -4,7 +4,23 @@ import { pool, validationFunctions } from '../../core/utilities';
 const isNumberProvided = validationFunctions.isNumberProvided;
 
 /**
- * Check whetehr the query parameter 'sort' is valid. If sort is empty or is neither 'asc' nor 'desc',
+ * Check whether the query parameter 'orderby' is valid. If orderby is empty or not one of these values
+ * ['title', 'author', 'year'] change it to default value 'title'.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ * @param next The next function.
+ */
+const validOrderby = (req: Request, res: Response, next: NextFunction) => {
+    let orderby = req.query.orderby ?? 'title';
+    if (orderby != 'title' && orderby != 'author' && orderby != 'year')
+        orderby = 'title';
+    req.query.orderby = orderby;
+    next();
+};
+
+/**
+ * Check whether the query parameter 'sort' is valid. If sort is empty or is neither 'asc' nor 'desc',
  * change it to default value 'asc'.
  *
  * @param req The HTTP request.
@@ -129,6 +145,7 @@ const validTitle = (req: Request, res: Response) => {
 };
 
 const parameterChecks = {
+    validOrderby,
     validSort,
     validOffset,
     validPage,
