@@ -144,6 +144,58 @@ const validTitle = (req: Request, res: Response) => {
     }
 };
 
+/**
+ * Checker whether the author is valid. If title is blank, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validAuthor = (req: Request, res: Response) => {
+    if (req.query.author && String(req.query.author).trim().length == 0) {
+        console.error('Author cannot be blank.');
+        res.status(400).send({
+            message: 'Author cannot be blank.',
+        });
+    }
+};
+
+/**
+ * Check wehther values for minimum rating and maximum rating are valid. If not, send 400 in response.
+ * If min is not entered, set to default value 1. If max is not entered set to default value 5.
+ * Conditions of invalid value:
+ * - Min is not a numeric value or is greater than upper bound of rating 5.
+ * - Max is not a numeric value or is less than lower bound of rating 1.
+ * - Min is greater than max.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validMinMax = (req: Request, res: Response) => {
+    // Assign default value if not entered
+    req.query.min = req.query.min ?? '1';
+    req.query.max = req.query.max ?? '5';
+    if (!isNumberProvided(req.query.min) || Number(req.query.min) > 5) {
+        // Invalid min
+        res.status(400).send({
+            message: 'Min is not numeric or is greater than 5.',
+        });
+    } else if (!isNumberProvided(req.query.max) || Number(req.query.max) < 1) {
+        // Invalid max
+        res.status(400).send({
+            message: 'Max is not numeric or is less than 1.',
+        });
+    } else if (
+        isNumberProvided(req.query.min) &&
+        isNumberProvided(req.query.max) &&
+        Number(req.query.min) > Number(req.query.max)
+    ) {
+        // Min greater than max
+        res.status(400).send({
+            message: 'Min is greater than max.',
+        });
+    }
+};
+
 const parameterChecks = {
     validOrderby,
     validSort,
@@ -151,6 +203,8 @@ const parameterChecks = {
     validPage,
     validISBN,
     validTitle,
+    validAuthor,
+    validMinMax,
 };
 
 export { parameterChecks };
