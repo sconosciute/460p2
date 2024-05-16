@@ -1,6 +1,6 @@
-//express is the framework we're going to use to handle requests
+// Express is the framework we're going to use to handle requests
 import express, { NextFunction, Request, Response, Router } from 'express';
-//Access the connection to Postgres Database
+// Access the connection to Postgres Database
 import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IBook, IRatings, IUrlIcon } from '../../core/models';
@@ -35,8 +35,6 @@ bookRouter.put(
         const attribute = req.query.attribute;
         const newValue = req.query.newValue;
 
-        console.log('function hit');
-
         // Check all params given
         if (!isbn || !attribute || !newValue) {
             return res.status(400).send({message: 'Missing parameter(s)'});
@@ -57,8 +55,8 @@ bookRouter.put(
                 });
             })
             .catch((e) => {
-                console.log(`Server failed to get books due to ${e}`);
-                res.status(500).send('Error while performing database query.');
+                console.log(`Server failed to update book due to ${e}`);
+                res.status(500).send('Server or database error occurred.');
             });
     }
 );
