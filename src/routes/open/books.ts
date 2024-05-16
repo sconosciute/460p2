@@ -89,6 +89,12 @@ bookRouter.post('/addBook', (req, res) => {
         image_small_url
     } = req.body;
 
+    const requiredFields = ['id', 'isbn13', 'authors', 'publication_year', 'original_title', 'title', 'rating_avg', 'rating_count', 'rating_1_star', 'rating_2_star', 'rating_3_star', 'rating_4_star', 'rating_5_star', 'image_url', 'image_small_url'];
+    const missingFields = requiredFields.filter(field => !req.body[field]);
+    if (missingFields.length > 0) {
+        return res.status(400).send("Required information for new book is missing ");
+    }
+
     pool.query('BEGIN')
         .then(() => {
             return pool.query(
