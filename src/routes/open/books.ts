@@ -63,7 +63,7 @@ const getBooksAndAuthorsQuery = `
  *
  * @apiDescription Deletes a single book from the database by ID or the ISBN.
  *
- * @apiName DeleteBooks
+ * @apiName DeleteBook
  * @apiGroup books
  *
  * @apiParam {Number} id The primary key ID of the book to delete
@@ -75,6 +75,25 @@ const getBooksAndAuthorsQuery = `
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
+//There is duplicate ISBN numbers in the database which will cause to crash!!!!!
+bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextFunction) => {
+    const isbn = req.params.isbn;
+    // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
+    pool.query('DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
+        .then(() => {
+            return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
+        })
+        .then(() => {
+            res.status(200).send({
+                message: 'Deleted book.'
+            });
+        })
+        .catch((error) => {
+            console.error(`Server failed to delete book due to ${error}`);
+            res.status(500).send('Server error, so sorry!');
+        });
+});
+
 
 /**
  * @api {delete} /books Request to delete a range of books
@@ -94,6 +113,24 @@ const getBooksAndAuthorsQuery = `
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
+bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
+    const { min_id, max_id } = req.params;
+    const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
+    pool.query(query, [min_id, max_id])
+        .then(() => {
+            const deleteBooksQuery = 'DELETE FROM books WHERE id >= $1 AND id <= $2;';
+            return pool.query(deleteBooksQuery, [min_id, max_id]);
+        })
+        .then(() => {
+            res.status(200).send({
+                message: 'Deleted range of books.'
+            });
+        })
+        .catch((error) => {
+            console.error(error);
+            res.status(500).send('Server error, so sorry!');
+        });
+});
 
 //endregion Post/Delete
 
