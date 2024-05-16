@@ -15,6 +15,7 @@ export const checkParamsIdToJwtId = (
     next();
 };
 //Add middle ware for permissions
-export const hasPermissions = (permissions) => {
+export const hasPermissions = (permissions) => (req, res, next) => {
+    // Query to retrieve permissions for the current user
 
 };

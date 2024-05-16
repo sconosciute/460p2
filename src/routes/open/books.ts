@@ -5,6 +5,7 @@ import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IBook, IRatings, IUrlIcon } from '../../core/models';
 import { QueryResult } from 'pg';
+import { hasPermissions } from '../../core/middleware/verificationChecks';
 
 
 const bookRouter: Router = express.Router();
@@ -133,20 +134,25 @@ bookRouter.post('/addBook', (req, res) => {
  *
  * @apiSuccess (200) {String} Success book was deleted!
  *
- * @apiError (404) {String} message "No books found matching the criteria"
+ * @apiError (400) {String} message "No books found matching the criteria"
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
 bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFunction) => {
     const isbn = req.params.isbn;
 
+    if (!/^\d{13}$/.test(isbn)) {
+        return res.status(400).send({
+            message: 'No books found matching the criteria'
+        });
+    }
     pool.query('DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
         .then(() => {
             return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
         })
         .then(() => {
             res.status(200).send({
-                message: 'Deleted book(s).'
+                message: 'Success book was deleted!.'
             });
         })
         .catch((error) => {
@@ -171,12 +177,30 @@ bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFu
  *
  * @apiSuccess (200) {String} Success: Range of books deleted!
  *
- * @apiError (404) {String} message "No books found matching the criteria"
+ * @apiError (400) {String} message "No books found matching the criteria"
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
 bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
     const { min_id, max_id } = req.params;
+
+    if (isNaN(Number(min_id)) || isNaN(Number(max_id))) {
+        return res.status(400).send({
+            message: 'No books found matching the criteria'
+        });
+    }
+
+    // Convert min_id and max_id to integers
+    const minId = parseInt(min_id);
+    const maxId = parseInt(max_id);
+
+    // Validate that min_id is less than or equal to max_id
+    if (minId > maxId) {
+        return res.status(400).send({
+            message: 'No books found matching the criteria'
+        });
+    }
+
     const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
     pool.query(query, [min_id, max_id])
         .then(() => {
@@ -185,7 +209,7 @@ bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Respo
         })
         .then(() => {
             res.status(200).send({
-                message: 'Deleted range of books.'
+                message: 'Range of books deleted!'
             });
         })
         .catch((error) => {
