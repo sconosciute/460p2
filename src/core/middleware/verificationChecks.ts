@@ -1,5 +1,6 @@
 import { NextFunction, RequestHandler, Response } from 'express';
 import { IJwtRequest } from '../models/JwtRequest.model';
+import { pool } from '../utilities';
 
 export const checkParamsIdToJwtId = (
     request: IJwtRequest,
@@ -15,21 +16,5 @@ export const checkParamsIdToJwtId = (
 };
 //Add middle ware for permissions
 export const hasPermissions = (permissions) => {
-    return (request, response, next) => {
 
-        const query = 'SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_idWHERE account_id = 2';
-
-        if (permissions.includes(query)) {
-            next();
-        } else {
-            response.status(401).send({
-                message: 'Missing required permission to access',
-            });
-        }
-    };
 };
-
-
-
-
-

@@ -6,6 +6,7 @@ import { parameterChecks } from '../../core/middleware';
 import { IBook, IRatings, IUrlIcon } from '../../core/models';
 import { QueryResult } from 'pg';
 
+
 const bookRouter: Router = express.Router();
 
 const validOrderby = parameterChecks.validOrderby;
@@ -20,6 +21,19 @@ const getBooksAndAuthorsQuery = `
     (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
         authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
     ON (books.id = author_table.book)`;
+
+
+bookRouter.get('/books', async (req, res) => {
+    try {
+        const booksResult = await pool.query('SELECT * FROM books');
+        const books = booksResult.rows;
+        res.json(books);
+    } catch (err) {
+        console.error('Error getting books:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 
 //region Post/Delete
 /**
@@ -55,6 +69,56 @@ const getBooksAndAuthorsQuery = `
  * @apiError (403: unauthorized user) {String} message "You do not have access to add book"
  * @apiError (401: permission denied) {String} message "You do not have permission to add book"
  */
+bookRouter.post('/addBook', (req, res) => {
+    const {
+        id,
+        isbn13,
+        authors,
+        publication_year,
+        original_title,
+        title,
+        rating_avg,
+        rating_count,
+        rating_1_star,
+        rating_2_star,
+        rating_3_star,
+        rating_4_star,
+        rating_5_star,
+        image_url,
+        image_small_url
+    } = req.body;
+
+    pool.query('BEGIN')
+        .then(() => {
+            return pool.query(
+                'INSERT INTO books (id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
+                [id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url]
+            );
+        })
+        .then(result => {
+            const bookId = result.rows[0].id;
+            const authorNames = authors.split(';');
+            const authorPromises = authorNames.map(authorName => {
+                return pool.query('INSERT INTO authors (name) VALUES ($1) RETURNING id', [authorName])
+                    .then(authorResult => {
+                        const authorId = authorResult.rows[0].id;
+                        return pool.query('INSERT INTO book_author (book, author) VALUES ($1, $2)', [bookId, authorId]);
+                    });
+            });
+            return Promise.all(authorPromises);
+        })
+        .then(() => pool.query('COMMIT'))
+        .then(() => {
+            res.status(201).send("Success new book was added to the database");
+        })
+        .catch(error => {
+            return pool.query('ROLLBACK')
+                .then(() => {
+                    console.error(`Failed to add book due to ${error}`);
+                    res.status(500).send("An error occurred while adding the book");
+                });
+        });
+});
 
 /**
  * @api {delete} /books Request to delete a book
@@ -73,24 +137,24 @@ const getBooksAndAuthorsQuery = `
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
-//There is duplicate ISBN numbers in the database which will cause to crash!!!!!
-bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextFunction) => {
+bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFunction) => {
     const isbn = req.params.isbn;
-    // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
-    pool.query('DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
+
+    pool.query('DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
         .then(() => {
             return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
         })
         .then(() => {
             res.status(200).send({
-                message: 'Deleted book.'
+                message: 'Deleted book(s).'
             });
         })
         .catch((error) => {
-            console.error(`Server failed to delete book due to ${error}`);
+            console.error(`Server failed to delete book(s) due to ${error}`);
             res.status(500).send('Server error, so sorry!');
         });
 });
+
 
 
 /**
