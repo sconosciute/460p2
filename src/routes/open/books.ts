@@ -76,24 +76,31 @@ const getBooksAndAuthorsQuery = `
  * @apiError (403) {String} message "Unauthorized user"
  */
 //There is duplicate ISBN numbers in the database which will cause to crash!!!!!
-bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextFunction) => {
-    const isbn = req.params.isbn;
-    // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
-    pool.query('DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
-        .then(() => {
-            return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
-        })
-        .then(() => {
-            res.status(200).send({
-                message: 'Deleted book.'
+bookRouter.delete(
+    '/deleteBook/:isbn',
+    (req: Request, res: Response, next: NextFunction) => {
+        const isbn = req.params.isbn;
+        // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
+        pool.query(
+            'DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)',
+            [isbn]
+        )
+            .then(() => {
+                return pool.query('DELETE FROM books WHERE isbn13 = $1', [
+                    isbn,
+                ]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Deleted book.',
+                });
+            })
+            .catch((error) => {
+                console.error(`Server failed to delete book due to ${error}`);
+                res.status(500).send('Server error, so sorry!');
             });
-        })
-        .catch((error) => {
-            console.error(`Server failed to delete book due to ${error}`);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
-
+    }
+);
 
 /**
  * @api {delete} /books Request to delete a range of books
@@ -113,24 +120,29 @@ bookRouter.delete('/deleteBook/:isbn', (req: Request, res: Response, next: NextF
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
-    const { min_id, max_id } = req.params;
-    const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
-    pool.query(query, [min_id, max_id])
-        .then(() => {
-            const deleteBooksQuery = 'DELETE FROM books WHERE id >= $1 AND id <= $2;';
-            return pool.query(deleteBooksQuery, [min_id, max_id]);
-        })
-        .then(() => {
-            res.status(200).send({
-                message: 'Deleted range of books.'
+bookRouter.delete(
+    '/deleteRangeBooks/:min_id/:max_id',
+    (req: Request, res: Response, next: NextFunction) => {
+        const { min_id, max_id } = req.params;
+        const query =
+            'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
+        pool.query(query, [min_id, max_id])
+            .then(() => {
+                const deleteBooksQuery =
+                    'DELETE FROM books WHERE id >= $1 AND id <= $2;';
+                return pool.query(deleteBooksQuery, [min_id, max_id]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Deleted range of books.',
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                res.status(500).send('Server error, so sorry!');
             });
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
+    }
+);
 
 //endregion Post/Delete
 
@@ -283,20 +295,15 @@ bookRouter.get(
     validPage,
     (req: Request, res: Response) => {
         const orderQuery = {
-            title: `${getBooksAndAuthorsQuery} ORDER BY title ${req.query.sort} OFFSET $1 LIMIT $2`,
-            author: `${getBooksAndAuthorsQuery} ORDER BY author_table.authors ${req.query.sort} OFFSET $1 LIMIT $2`,
-            year: `${getBooksAndAuthorsQuery} ORDER BY publication_year ${req.query.sort}, title ${req.query.sort} 
-                    OFFSET $1 LIMIT $2`,
+            title: `title ${req.query.sort}`,
+            author: `author_table.authors ${req.query.sort}`,
+            year: `publication_year ${req.query.sort}, title ${req.query.sort}`,
         };
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
+        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY ${orderQuery[String(req.query.orderby)]} OFFSET $1 LIMIT $2`;
         const values = [String(offset * (page - 1)), String(req.query.offset)];
-        queryAndResponse(
-            orderQuery[String(req.query.orderby)],
-            values,
-            res,
-            true
-        );
+        queryAndResponse(getBooks, values, res, true);
     }
 );
 

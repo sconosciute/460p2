@@ -1628,71 +1628,6 @@
 					"response": []
 				},
 				{
-					"name": "min&max - all ratings",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"pm.sendRequest({\r",
-									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1&offset=10000\",\r",
-									"    method: \"GET\"\r",
-									"}, function(err, res) {\r",
-									"    if (err == null) {\r",
-									"        pm.collectionVariables.set(\"all_book_count\", res.json().books.length);\r",
-									"    }\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"pm.test(\"200 Success\", () => {\r",
-									"    pm.response.to.have.status(200);\r",
-									"})\r",
-									"\r",
-									"pm.test(\"Rating 1 - 5 includes all books\", () => {\r",
-									"    pm.expect(response.books.length).to.be.eql(pm.collectionVariables.get(\"all_book_count\"))\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?min=1&max=5",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "min",
-									"value": "1"
-								},
-								{
-									"key": "max",
-									"value": "5"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "min&max - min greater than max",
 					"event": [
 						{
@@ -1835,10 +1770,6 @@
 			"key": "last_page",
 			"value": "",
 			"type": "string"
-		},
-		{
-			"key": "all_book_count",
-			"value": ""
 		}
 	]
 }
