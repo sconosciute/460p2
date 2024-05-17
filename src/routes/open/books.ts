@@ -5,8 +5,6 @@ import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IBook, IRatings, IUrlIcon } from '../../core/models';
 import { QueryResult } from 'pg';
-import { hasPermissions } from '../../core/middleware/verificationChecks';
-
 
 const bookRouter: Router = express.Router();
 
@@ -16,25 +14,14 @@ const validOffset = parameterChecks.validOffset;
 const validPage = parameterChecks.validPage;
 const validISBN = parameterChecks.validISBN;
 const validTitle = parameterChecks.validTitle;
+const validAuthor = parameterChecks.validAuthor;
+const validMinMax = parameterChecks.validMinMax;
 
 const getBooksAndAuthorsQuery = `
     SELECT * FROM books INNER JOIN 
     (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
         authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
     ON (books.id = author_table.book)`;
-
-
-bookRouter.get('/books', async (req, res) => {
-    try {
-        const booksResult = await pool.query('SELECT * FROM books');
-        const books = booksResult.rows;
-        res.json(books);
-    } catch (err) {
-        console.error('Error getting books:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
 
 //region Post/Delete
 /**
@@ -70,62 +57,6 @@ bookRouter.get('/books', async (req, res) => {
  * @apiError (403: unauthorized user) {String} message "You do not have access to add book"
  * @apiError (401: permission denied) {String} message "You do not have permission to add book"
  */
-bookRouter.post('/addBook', (req, res) => {
-    const {
-        id,
-        isbn13,
-        authors,
-        publication_year,
-        original_title,
-        title,
-        rating_avg,
-        rating_count,
-        rating_1_star,
-        rating_2_star,
-        rating_3_star,
-        rating_4_star,
-        rating_5_star,
-        image_url,
-        image_small_url
-    } = req.body;
-
-    const requiredFields = ['id', 'isbn13', 'authors', 'publication_year', 'original_title', 'title', 'rating_avg', 'rating_count', 'rating_1_star', 'rating_2_star', 'rating_3_star', 'rating_4_star', 'rating_5_star', 'image_url', 'image_small_url'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
-    if (missingFields.length > 0) {
-        return res.status(400).send("Required information for new book is missing ");
-    }
-
-    pool.query('BEGIN')
-        .then(() => {
-            return pool.query(
-                'INSERT INTO books (id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-                [id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url]
-            );
-        })
-        .then(result => {
-            const bookId = result.rows[0].id;
-            const authorNames = authors.split(';');
-            const authorPromises = authorNames.map(authorName => {
-                return pool.query('INSERT INTO authors (name) VALUES ($1) RETURNING id', [authorName])
-                    .then(authorResult => {
-                        const authorId = authorResult.rows[0].id;
-                        return pool.query('INSERT INTO book_author (book, author) VALUES ($1, $2)', [bookId, authorId]);
-                    });
-            });
-            return Promise.all(authorPromises);
-        })
-        .then(() => pool.query('COMMIT'))
-        .then(() => {
-            res.status(201).send("Success new book was added to the database");
-        })
-        .catch(error => {
-            return pool.query('ROLLBACK')
-                .then(() => {
-                    console.error(`Failed to add book due to ${error}`);
-                    res.status(500).send("An error occurred while adding the book");
-                });
-        });
-});
 
 /**
  * @api {delete} /books Request to delete a book
@@ -140,34 +71,36 @@ bookRouter.post('/addBook', (req, res) => {
  *
  * @apiSuccess (200) {String} Success book was deleted!
  *
- * @apiError (400) {String} message "No books found matching the criteria"
+ * @apiError (404) {String} message "No books found matching the criteria"
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFunction) => {
-    const isbn = req.params.isbn;
-
-    if (!/^\d{13}$/.test(isbn)) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
-    pool.query('DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
-        .then(() => {
-            return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
-        })
-        .then(() => {
-            res.status(200).send({
-                message: 'Success book was deleted!.'
+//There is duplicate ISBN numbers in the database which will cause to crash!!!!!
+bookRouter.delete(
+    '/deleteBook/:isbn',
+    (req: Request, res: Response, next: NextFunction) => {
+        const isbn = req.params.isbn;
+        // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
+        pool.query(
+            'DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)',
+            [isbn]
+        )
+            .then(() => {
+                return pool.query('DELETE FROM books WHERE isbn13 = $1', [
+                    isbn,
+                ]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Deleted book.',
+                });
+            })
+            .catch((error) => {
+                console.error(`Server failed to delete book due to ${error}`);
+                res.status(500).send('Server error, so sorry!');
             });
-        })
-        .catch((error) => {
-            console.error(`Server failed to delete book(s) due to ${error}`);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
-
-
+    }
+);
 
 /**
  * @api {delete} /books Request to delete a range of books
@@ -183,46 +116,33 @@ bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFu
  *
  * @apiSuccess (200) {String} Success: Range of books deleted!
  *
- * @apiError (400) {String} message "No books found matching the criteria"
+ * @apiError (404) {String} message "No books found matching the criteria"
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
-    const { min_id, max_id } = req.params;
-
-    if (isNaN(Number(min_id)) || isNaN(Number(max_id))) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
-
-    // Convert min_id and max_id to integers
-    const minId = parseInt(min_id);
-    const maxId = parseInt(max_id);
-
-    // Validate that min_id is less than or equal to max_id
-    if (minId > maxId) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
-
-    const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
-    pool.query(query, [min_id, max_id])
-        .then(() => {
-            const deleteBooksQuery = 'DELETE FROM books WHERE id >= $1 AND id <= $2;';
-            return pool.query(deleteBooksQuery, [min_id, max_id]);
-        })
-        .then(() => {
-            res.status(200).send({
-                message: 'Range of books deleted!'
+bookRouter.delete(
+    '/deleteRangeBooks/:min_id/:max_id',
+    (req: Request, res: Response, next: NextFunction) => {
+        const { min_id, max_id } = req.params;
+        const query =
+            'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
+        pool.query(query, [min_id, max_id])
+            .then(() => {
+                const deleteBooksQuery =
+                    'DELETE FROM books WHERE id >= $1 AND id <= $2;';
+                return pool.query(deleteBooksQuery, [min_id, max_id]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Deleted range of books.',
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                res.status(500).send('Server error, so sorry!');
             });
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
+    }
+);
 
 //endregion Post/Delete
 
@@ -353,19 +273,19 @@ const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
  * @apiName GetAllBooks
  * @apiGroup Books
  *
- * @apiQuery {string="title","author","year"} orderby="title" The specified attribute of the book that it use
+ * @apiQuery {String="title","author","year"} orderby="title" The specified attribute of the book that it use
  * sort books.
- * @apiQuery {string="asc","desc"} sort="asc" The order of the book. It can be "asc" for ascending or "desc"
+ * @apiQuery {String="asc","desc"} sort="asc" The order of the book. It can be "asc" for ascending or "desc"
  * for descending.
- * @apiQuery {number} offset=15 The number of books display per page.
- * @apiQuery {number} page=1 The page number that starts from one.
+ * @apiQuery {Number} offset=15 The number of books display per page.
+ * @apiQuery {Number} page=1 The page number that starts from one.
  *
- * @apiSuccess (200 Success) {IBook[]} books A list of books in the given page.
+ * @apiSuccess (200 Success) {Array<IBook>} books A list of books in the given page.
  *
- * @apiError (400 Invalid page) {string} message "The page number in the request is not numeric."
- * @apiError (400 Invalid offset) {string} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {string} message "Unexpected error - cannot retrieve books."
- * @apiError (500 Internal server error) {string} message "Server error."
+ * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
+ * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
+ * @apiError (400 No book found) {String} message "Unexpected error - cannot retrieve books."
+ * @apiError (500 Internal server error) {String} message "Server error - Contact Support."
  */
 bookRouter.get(
     '/all',
@@ -375,47 +295,17 @@ bookRouter.get(
     validPage,
     (req: Request, res: Response) => {
         const orderQuery = {
-            title: 'title ',
-            author: 'author_table.author ',
-            year: 'publication_year, title ',
+            title: `title ${req.query.sort}`,
+            author: `author_table.authors ${req.query.sort}`,
+            year: `publication_year ${req.query.sort}, title ${req.query.sort}`,
         };
         const offset = Number(req.query.offset);
         const page = Number(req.query.page);
-        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY $1 OFFSET $2 LIMIT $3;`;
-        const values = [
-            orderQuery[String(req.query.orderby)] + String(req.query.sort),
-            String(offset * (page - 1)),
-            String(req.query.offset),
-        ];
+        const getBooks = `${getBooksAndAuthorsQuery} ORDER BY ${orderQuery[String(req.query.orderby)]} OFFSET $1 LIMIT $2`;
+        const values = [String(offset * (page - 1)), String(req.query.offset)];
         queryAndResponse(getBooks, values, res, true);
     }
 );
-
-/**
- * @api {get} /books/all
- *
- * @apiDescription Request to retrieve all books sorted by publication date.
- *   If there are multiple books published on the same date, those books are then
- *   sorted by title in descending alphabetical order (A to Z). Uses pagination,
- *   where offset is the number of books per page. A negative/zero offset will
- *   be converted to positive. A page less than one will redirect to the first
- *   page. A page number larger than the maximum will redirect to the maximum
- *   page.
- *
- * @apiName GetAllByPub
- * @apiGroup books
- *
- * @apiQuery {String = "asc", "desc"} sort="asc" The order of the book. Use "asc"
- *   for ascending and "desc" for descending.
- * @apiQuery {Number} offset=15 The number of books displayed per page. Default
- *   is 15.
- * @apiQuery {Number} page=1 The page number. Default is 1.
- *
- * @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books sorted by publication date.
- *
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
- */
-// method goes here
 
 //endregion getAll
 
@@ -428,26 +318,30 @@ bookRouter.get(
  * If parameter q is entered, it means it will search by keyword and all other parameters will not
  * make effect. It is possible that no book will be retrieved because no match is found, or multiple
  * books are retrieved because more than one match is found. Though query parameters are optional, at
- * least one parameter must be entered.
+ * least one parameter must be entered. If one of min or max is entered without another, it will set
+ * the missing parameter to its default value 1 (for min) or 5 (for max).
  *
  * @apiName SearchByParameter
  * @apiGroup Books
  *
- * @apiParam {string} [q] The keywords to search the database for.
- * @apiQuery {string} [title] The title of the book to search for.
- * @apiQuery {number} [isbn] The ISBN of the book to search for.
- * @apiQuery {string} [author] The author's first and/or last name.
- * @apiQuery {Number} [min] The minimum rating.
- * @apiQuery {Number} [max] The maximum rating.
+ * @apiQuery {String} [title] The title of the book to search for.
+ * @apiQuery {Number} [isbn] The ISBN of the book to search for.
+ * @apiQuery {String} [author] The author's first and/or last name.
+ * @apiQuery {Number{1-5}} [min] The minimum rating.
+ * @apiQuery {Number{1-5}} [max] The maximum rating.
  *
- * @apiSuccess (200 Success) {IBook[]} books A list of books match the parameters entered.
+ * @apiSuccess (200 Success) {Array<IBook>} books A list of books match the parameters entered.
  *
- * @apiError (400 No parameter) {string} message "Search required at least one query parameter."
- * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not numeric."
- * @apiError (400 Invalid ISBN) {string} message "The ISBN in the request is not 13 digits long."
+ * @apiError (400 No parameter) {String} message "Search required at least one query parameter."
+ * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not numeric."
+ * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
+ * @apiError (400 Invalid Min/Max) {String} message "Min is not numeric or is greater than 5."
+ * @apiError (400 Invalid Min/Max) {String} message "Max is not numeric or is less than 1."
+ * @apiError (400 Invalid Min/Max) {String} message "Min is greater than max."
  * @apiError (400 Blank parameter) {String} message "Title cannot be blank."
  * @apiError (400 Blank parameter) {String} message "ISBN cannot be blank."
- * @apiError (500 Internal server error) {string} message "Server error."
+ * @apiError (400 Blank parameter) {String} message "Author cannot be blank."
+ * @apiError (500 Internal server error) {String} message "Server error - Contact Support."
  */
 bookRouter.get(
     '/search',
@@ -461,26 +355,12 @@ bookRouter.get(
         }
     },
     (req: Request, res: Response, next: NextFunction) => {
-        if (req.query.q) {
-            // This is a placeholder for keyword search
-            console.log();
-        } else {
-            if (req.query.title) validTitle(req, res);
-            if (req.query.isbn) validISBN(req, res);
-
-            // temporary checks -- will write into parameterChecks.ts
-            if(req.query.author && ((String(req.query.author).trim().length < 1))) {
-                res.status(400).send({}) // no chars in author name
-            }
-            if(req.query.min && isNaN(Number(req.query.min)) || Number(req.query.min) > 5) {
-                res.status(400).send({}) // min not a num or over 5
-            }
-            if(req.query.max && isNaN(Number(req.query.max)) || Number(req.query.max) < 0) {
-                res.status(400).send({}) // max not a num or less than 0
-            }
-            if(req.query.min && req.query.max && Number(req.query.min) > Number(req.query.max)) {
-                res.status(400).send({}) // min > max
-            }
+        if (!req.query.q) {
+            if (!res.writableEnded && req.query.title) validTitle(req, res);
+            if (!res.writableEnded && req.query.isbn) validISBN(req, res);
+            if (!res.writableEnded && req.query.author) validAuthor(req, res);
+            if (!res.writableEnded && (req.query.min || req.query.max))
+                validMinMax(req, res);
         }
         if (String(res.statusCode).startsWith('2')) next();
     },
@@ -488,10 +368,7 @@ bookRouter.get(
         let getBooks = `${getBooksAndAuthorsQuery} WHERE`;
         let count = 1;
         const values = [];
-        if (req.query.q) {
-            // This is a placeholder for keyword search
-            console.log();
-        } else {
+        if (!req.query.q) {
             // If isbn entered, append query for ISBN
             if (req.query.isbn) {
                 if (!getBooks.endsWith('WHERE'))
@@ -519,30 +396,17 @@ bookRouter.get(
                 if (!getBooks.endsWith('WHERE'))
                     getBooks = getBooks.concat(' AND');
                 getBooks = getBooks.concat(` authors LIKE $${count++}`);
-                values.push(
-                    String(`%` + req.query.author + `%`)
-                );
+                values.push(String('%' + req.query.author + '%'));
             }
 
             // If min and/or max entered, append query for min and/or max rating
             if (req.query.min || req.query.max) {
                 if (!getBooks.endsWith('WHERE'))
                     getBooks = getBooks.concat(' AND');
-
-                let lowerLimit = 0;
-                let upperLimit = 5;
-                if (req.query.min) {
-                    lowerLimit = Number(req.query.min);
-                }
-                if (req.query.max) {
-                    upperLimit = Number(req.query.max);
-                }
-
-                getBooks = getBooks.concat(` rating_avg BETWEEN $${count++} AND $${count++}`);
-                values.push(
-                    String(lowerLimit),
-                    String(upperLimit)
+                getBooks = getBooks.concat(
+                    ` rating_avg BETWEEN $${count++} AND $${count++}`
                 );
+                values.push(String(req.query.min), String(req.query.max));
             }
         }
         queryAndResponse(getBooks, values, res, false);
@@ -582,94 +446,6 @@ bookRouter.get(
         );
     }
 );
-
-/**
- * @api {get} /books/search
- *
- * @apiDescription Request to search and retrieve all books with the specified
- *   author. A book with multiple authors will still be retrieved if one author
- *   matches the name searched.
- *
- * @apiName GetBooksByAuthor
- * @apiGroup books
- *
- * @apiQuery author The author's first and/or last name
- *
- * @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books with the author specified in input.
- *
- * @apiError (400: Bad request) {String} message Missing parameter - Author name required.
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
- */
-bookRouter.get('/search', (req: Request, res: Response) => {
-    const author = req.query.authorn;
-    const query = `SELECT * FROM books WHERE id IN ( SELECT book FROM book_author WHERE author IN ( SELECT authors.id FROM authors WHERE name LIKE $1 ) ) ORDER BY title asc;`;
-
-    // Currently does not work -- gives empty array of books.
-    pool.query(query, [`'%${author}%'`])
-        .then((result) => {
-            res.status(200).send({
-                books: result.rows.map((row: IBook) => row as IBook),
-            });
-        })
-        .catch((e) => {
-            console.log(`Server failed to get books due to ${e}`);
-            res.status(500).send('Error while performing database query.');
-        });
-});
-
-/**
- * @api {get} /books/search
- *
- * @apiDescription Request to search and retrieve all books that have a rating
- *   that is within the given rating range (inclusive).
- *
- * @apiName GetBooksByRating
- * @apiGroup books
- *
- * @apiQuery {Number} min The minimum rating.
- * @apiQuery {Number} max The maximum rating.
- *
- * @apiSuccess (200: Success) {Array<IBook>} Returns an array of all books that
- *   have a rating within the given range.
- *
- * @apiError (400: Bad request) {String} message Missing parameter(s) - Min and Max rating
- *   required.
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
- */
-bookRouter.get('/search/rating', (req: Request, res: Response) => {
-    const min = Number(req.query.min);
-    const max = Number(req.query.max);
-    const query = `SELECT * FROM books WHERE rating_avg BETWEEN $1 AND $2 ORDER BY title ASC;`;
-
-    if(isNaN(min) || isNaN(max)) {
-        res.status(400).send({
-            message: 'Missing parameter(s) - Min and Max rating required.',
-        });
-    }
-
-    if(min < 0 || min > 5 || max < 0 || max > 5) {
-        res.status(400).send({
-            message: 'Min or max is out of bounds (must be [0, 5])',
-        });
-    }
-
-    if(min > max) {
-        res.status(400).send({
-            message: 'Min is greater than max.',
-        });
-    }
-
-    pool.query(query, [min, max])
-        .then((result) => {
-            res.status(200).send({
-                books: result.rows.map((row: IBook) => row as IBook),
-            });
-        })
-        .catch((e) => {
-            console.log(`Server failed to find books due to ${e}`);
-            res.status(500).send('Error while performing database query.');
-        });
-});
 
 /**
  * @api {put} /books
