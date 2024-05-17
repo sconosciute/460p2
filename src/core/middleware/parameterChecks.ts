@@ -217,6 +217,61 @@ function clamp(n: number, max: number, min: number): number {
     return n <= min ? min : n >= max ? max : n;
 }
 
+
+/**
+ * Check if the ratingtype is valid for ratings. If it is invalid, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validRatingType = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Rating type check');
+    const validRatingType = ['rating_1_star', 'rating_2_star', 'rating_3_star', 'rating_4_star', 'rating_5_star'];
+
+    if (req.query.ratingtype && String(req.query.ratingtype).trim().length == 0
+        || !validRatingType.includes(String(req.query.ratingtype))){
+        return res.status(400).send({
+            message: 'Invalid rating type.',
+        });
+    }
+    next();
+};
+
+/**
+ * Check if the changetype is valid for ratings. If it is invalid, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validRatingChangeType = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Rating change type check');
+    const validRatingChangeType = ['decreaseby', 'increaseby', 'setto'];
+
+    if (req.query.changetype && String(req.query.changetype).trim().length == 0
+        || !validRatingChangeType.includes(String(req.query.changetype))){
+        return res.status(400).send({
+            message: 'Invalid rating change type.',
+        });
+    }
+    next();
+};
+
+/**
+ * Check if the value for rating is valid for ratings. If it is invalid, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validRatingValue = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Rating value check');
+    if (req.query.value && isNaN(Number(req.query.value))){
+        return res.status(400).send({
+            message: 'Invalid value to set or change rating by.',
+        });
+    }
+    next();
+};
+
 const parameterChecks = {
     validOrderby,
     validSort,
@@ -226,6 +281,9 @@ const parameterChecks = {
     validTitle,
     validAuthor,
     validMinMax,
+    validRatingType,
+    validRatingChangeType,
+    validRatingValue
 };
 
 export { parameterChecks };

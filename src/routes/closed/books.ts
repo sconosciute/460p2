@@ -8,58 +8,121 @@ import { QueryResult } from 'pg';
 
 const bookRouter: Router = express.Router();
 
+const validRatingType = parameterChecks.validRatingType;
+const validRatingChangeType = parameterChecks.validRatingChangeType;
+const validISBN = parameterChecks.validISBN;
+const validRatingValue = parameterChecks.validRatingValue;
+
 /**
- * @api {put} /books
+ * @api {put} /books/update
  *
- * @apiDescription Allows an authenticated user to update a book's information.
- *   Retrieves the book to be updated with the ISBN.
+ * @apiDescription Allows an authenticated user to update a book's rating.
+ *   Retrieves the book to be updated with the ISBN. Updates the amount of
+ *   1 star ratings, 2 star ratings... 5 star ratings that a book has (as
+ *   specified by input) and automatically calculates then inserts the new
+ *   average rating and total rating count into the database.
  *
- * @apiName UpdateBook
+ * @apiName UpdateBookRating
  * @apiGroup books
  *
- * @apiParam {Int} isbn-13 The ISBN of the book to be updated.
- * @apiParam {String} attribute The attribute of the book that will be updated.
- * @apiParam {String} newInfo The information to update the book with.
+ * @apiParam {Int} isbn The ISBN of the book to be updated.
+ * @apiParam {String="rating_1_star","rating_2_star","rating_3_star", "rating_4_star", "rating_5_star"} ratingtype="rating_1" Which rating to update.
+ * @apiParam {String="increaseby","decreaseby","setto"} changetype="increaseby" How to update the rating.
+ * @apiParam {Int} value The number to increase or decrease the rating by, or set the rating to this number.
  *
- * @apiSuccess (200: Success) {String} Book updated successfully.
+ * @apiSuccess (200: Success) {String} Book ratings updated successfully.
  *
- * @apiError (400: Bad request) {String} message Missing parameter(s).
  * @apiError (401: Unauthorized) {String} message User does not have permission to update books.
  * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
 // Only works for book attributes for now
 bookRouter.put(
-    '/update',
+    '/update', validISBN, validRatingType, validRatingChangeType, validRatingValue,
     (req: Request, res: Response) => {
-        const isbn = BigInt(req.query.isbn as string);
-        const attribute = req.query.attribute;
-        const newValue = req.query.newValue;
+        const isbn = req.query.isbn;
+        const ratingtype = req.query.ratingtype;
+        const changetype = req.query.changetype;
+        const value = Number(req.query.value);
 
-        // Check all params given
-        if (!isbn || !attribute || !newValue) {
-            return res.status(400).send({message: 'Missing parameter(s)'});
+        // Build SQL query
+        let query = `UPDATE books SET ${ratingtype} = `;
+
+        if(changetype === 'increaseby') {
+            query += `${ratingtype} + $1 `;
+        } else if(changetype === 'decreaseby') {
+            query += `${ratingtype} - $1 `;
+        } else { // set
+            query += `$1 `;
         }
 
-        let table = 'books';
-        if(attribute === 'authorsName') {
-            table = 'authors';
-        }
+        query += `WHERE isbn13 = $2;`;
 
-        const query = `UPDATE ${table} SET ${attribute} = $1 WHERE isbn13 = $2;`;
-
-        // Currently does not work -- gives empty array of books.
-        pool.query(query, [newValue, isbn])
-            .then((result) => {
-                res.status(200).send({
-                    message: 'Book updated successfully.',
-                });
+        // Transaction
+        pool.query('BEGIN')
+            .then(() => {
+                return pool.query(query, [value, isbn]);
             })
-            .catch((e) => {
-                console.log(`Server failed to update book due to ${e}`);
-                res.status(500).send('Server or database error occurred.');
+            .then((result) => {
+                if (result.rowCount == 0) {
+                    throw new Error('no books');
+                }
+            })
+            .then(() => {
+                const ratingCount = `SELECT ${ratingtype} FROM books WHERE isbn13 = $1;`;
+                return pool.query(ratingCount, [isbn]);
+            })
+            .then((result) => {
+                // Get attribute (rating_1_star, rating_2_star...)
+                const attribute = Object.keys(result.rows[0]);
+
+                // Ensure the rating results in a positive number
+                result.rows.forEach(row => {
+                    attribute.forEach(ratingCount => {
+                        const updatedValue = row[ratingCount];
+                        if (updatedValue < 0) {
+                            throw new Error('negative number');
+                        }
+                    });
+                });
+
+            })
+            .then((countPromise) => {
+                // Update total rating count
+                const calcCount = `UPDATE books SET rating_count = rating_1_star + rating_2_star + rating_3_star + rating_4_star + rating_5_star WHERE isbn13 = $1`;
+                return pool.query(calcCount, [isbn]);
+            })
+            .then(avgPromise => {
+                // Update average rating
+                const calcAvg = `UPDATE books SET rating_avg = ROUND((rating_1_star + 2*rating_2_star + 3*rating_3_star + 4*rating_4_star + 5*rating_5_star) / CAST(rating_count AS DECIMAL(30,1)), 2) WHERE isbn13 = $1`;
+                return pool.query(calcAvg, [isbn]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Book ratings updated successfully.',
+                });
+                return;
+            })
+            .then(() => {
+                return pool.query('COMMIT');
+            })
+            .catch((error) => {
+                return pool.query('ROLLBACK')
+                    .then(() => {
+                        let errorMessage = 'Server or database error occurred.';
+                        if(error.message === 'no books') {
+                            errorMessage = 'Update incomplete: No book with this ISBN.'
+                        } else if (error.message === 'negative number') {
+                            errorMessage = 'Update incomplete: Rating amount cannot be a negative number.'
+                        }
+
+                        res.status(500).send({
+                            message: errorMessage,
+                        });
+                    });
             });
     }
 );
+
 
 /**
  * @api {post} /books Request to add a new book
