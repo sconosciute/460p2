@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "19954788-f4f8-43ac-958f-0e259c58c33f",
+		"_postman_id": "80aa0cec-8abf-4605-8709-1f4163fdb075",
 		"name": "Book Queries Tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "34052929"
+		"_exporter_id": "33853299"
 	},
 	"item": [
 		{
@@ -943,139 +943,6 @@
 					"response": []
 				},
 				{
-					"name": "title - parameter with whitespace only",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"// Non-numeric page is invalid\r",
-									"pm.test(\"400 Blank Parameter\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?title=  ",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "title",
-									"value": "  "
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "title - valid string",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"pm.test(\"200 Success\", () => {\r",
-									"    pm.response.to.have.status(200);\r",
-									"})\r",
-									"\r",
-									"// The title \"the\" should have at least one match\r",
-									"pm.test(\"At least one match\", () => {\r",
-									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
-									"    pm.expect(response.books.length > 0);\r",
-									"})\r",
-									"\r",
-									"// Check if the list of books have certain schema\r",
-									"pm.test(\"List of books has required attributes\", () => {\r",
-									"    pm.expect(response).to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"schema\")));\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?title=the",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "title",
-									"value": "the"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "isbn - parameter with whitespace only",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"// Non-numeric page is invalid\r",
-									"pm.test(\"400 Missing Parameter\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?isbn=  ",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "isbn",
-									"value": "  "
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "isbn - non-numeric parameter",
 					"event": [
 						{
@@ -1209,47 +1076,6 @@
 					"response": []
 				},
 				{
-					"name": "author - parameter with whitespace only",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"// Non-numeric page is invalid\r",
-									"pm.test(\"400 Blank Parameter\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?author=  ",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "author",
-									"value": "  "
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "author - valid string",
 					"event": [
 						{
@@ -1363,8 +1189,8 @@
 									"const response = pm.response.json();\r",
 									"\r",
 									"// Non-numeric min is invalid\r",
-									"pm.test(\"400 Invalid Min/Max\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
 								"type": "text/javascript",
@@ -1404,8 +1230,8 @@
 									"const response = pm.response.json();\r",
 									"\r",
 									"// Min is greater and upper bound\r",
-									"pm.test(\"400 Invalid Min/Max\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
 								"type": "text/javascript",
@@ -1497,9 +1323,9 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"// Non-numeric max is invalid\r",
-									"pm.test(\"400 Invalid Min/Max\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
+									"// Non-numeric will convert to default.\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
 								"type": "text/javascript",
@@ -1538,10 +1364,19 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"// Max is smaller than lower bound\r",
-									"pm.test(\"400 Invalid Min/Max\", () => {\r",
-									"    pm.response.to.have.status(400);\r",
-									"})"
+									"const expected = {\r",
+									"    \"books\": []\r",
+									"}\r",
+									"\r",
+									"//Should be converted to min 1, max 1\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"//should receive empty array as no books are rated that low.\r",
+									"pm.test(\"Got no books\", () => {\r",
+									"    pm.response.to.have.jsonBody(expected);\r",
+									"});"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -1621,6 +1456,71 @@
 								{
 									"key": "max",
 									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min&max - all ratings",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1&offset=10000\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"all_book_count\", res.json().books.length);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Rating 1 - 5 includes all books\", () => {\r",
+									"    pm.expect(response.books.length).to.be.eql(pm.collectionVariables.get(\"all_book_count\"))\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=1&max=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "1"
+								},
+								{
+									"key": "max",
+									"value": "5"
 								}
 							]
 						}
@@ -1714,6 +1614,121 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "keywordSearch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json()\r",
+									"\r",
+									"const expected = {\r",
+									"    \"books\" : [\r",
+									"    {\r",
+									"        \"isbn13\": 9780439139600,\r",
+									"        \"authors\": \"J.K. Rowling, Mary GrandPré\",\r",
+									"        \"publication\": 2000,\r",
+									"        \"original_title\": \"Harry Potter and the Goblet of Fire\",\r",
+									"        \"title\": \"Harry Potter and the Goblet of Fire (Harry Potter, #4)\",\r",
+									"        \"ratings\": {\r",
+									"            \"average\": 4.53,\r",
+									"            \"count\": 1753043,\r",
+									"            \"rating_1\": 6676,\r",
+									"            \"rating_2\": 20210,\r",
+									"            \"rating_3\": 151785,\r",
+									"            \"rating_4\": 494926,\r",
+									"            \"rating_5\": 1195045\r",
+									"        },\r",
+									"        \"icons\": {\r",
+									"            \"large\": \"https://images.gr-assets.com/books/1361482611m/6.jpg\",\r",
+									"            \"small\": \"https://images.gr-assets.com/books/1361482611s/6.jpg\"\r",
+									"        }\r",
+									"    }\r",
+									"]\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Keyword Search 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Got goblet of fire\", () => {\r",
+									"    pm.response.to.have.jsonBody(expected);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?q=harry+potter+\"goblet\"-box",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "harry+potter+\"goblet\"-box"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "malformedKeyword",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const expected = {\r",
+									"    \"message\": \"Malformed query\\n Keyword query q must be a web search format and may include alphanumeric characters as well as - and \\\"\"\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Status 400: Malformed query\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Malformed keyword search query\", () => {\r",
+									"    pm.response.to.have.jsonBody(expected);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?q=harry()potter",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "harry()potter"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
@@ -1770,6 +1785,10 @@
 			"key": "last_page",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "all_book_count",
+			"value": ""
 		}
 	]
 }
