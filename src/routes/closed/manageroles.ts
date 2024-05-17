@@ -7,7 +7,7 @@ import { IJwtRequest } from '../../core/models';
 
 const mrRouter: Router = express.Router();
 
-// Middle ware to check if the user is an admin.
+// Middleware to check if the user is an admin.
 const roleCheck = (permission: string) => {
     return async (req: IJwtRequest, res: Response, next: NextFunction) => {
         const query = "SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_id WHERE account_id = $1"
@@ -62,11 +62,11 @@ mrRouter.post('/changeUserRole', roleCheck('admin'), (req, res) => {
 });
 
 /**
- * @api {put} /changeRole
+ * @api {put} /addNewRole
  *
- * @apiDescription Allows an admin user to update the role of a user.
+ * @apiDescription Allows an admin user to add a new role to the database.
  *
- * @apiName ChangeRole
+ * @apiName AddNewRole
  * @apiGroup manageroles
  *
  * @apiBody {Integer} roleID The ID of the new role.
@@ -81,7 +81,7 @@ mrRouter.post('/changeUserRole', roleCheck('admin'), (req, res) => {
  * @apiError (401: Invalid token) {String} message 'User not authorized to perform this action.'
  * @apiError (500: Internal server error) {String} message 'Server error during database query.'
  */
-mrRouter.put('/changeRole', roleCheck('admin'), (req, res) => {
+mrRouter.put('/addNewRole', roleCheck('admin'), (req, res) => {
     const roleID = req.body.roleID;
     const roleName = req.body.roleName;
     const admin = req.body.admin;
