@@ -74,7 +74,8 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
     if (isNumberProvided(temp)) {
         const offset = Math.abs(Number(req.query.offset));
         page = Number(temp);
-        const theQuery = `SELECT COUNT(id) AS count FROM books`;
+        const theQuery = `SELECT COUNT(id) AS count
+                          FROM books`;
         pool.query(theQuery)
             .then((result) => {
                 const maxPage: number = Math.ceil(
@@ -108,24 +109,26 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
  *
  * @param req The HTTP request.
  * @param res The HTTP response.
+ * @param next The next middleware function to run.
  */
-const validISBN = (req: Request, res: Response) => {
-    if (req.query.isbn && String(req.query.isbn).trim().length == 0) {
-        console.error('ISBN cannot be blank.');
-        res.status(400).send({
-            message: 'ISBN cannot be blank.',
-        });
-    } else if (!isNumberProvided(req.query.isbn)) {
-        console.error('The ISBN is not numberic.');
-        res.status(400).send({
-            message: 'The ISBN you passed through the request is not numberic.',
-        });
-    } else if (req.query.isbn.length != 13) {
-        console.error('The ISBN is not 13 digits.');
-        res.status(400).send({
-            message:
-                'The ISBN you passed through the request is not 13 digits.',
-        });
+const validISBN = (req: Request, res: Response, next: NextFunction) => {
+    console.log('ISBN Check');
+    if (!req.query.isbn) {
+        next();
+    } else {
+        if (!isNumberProvided(req.query.isbn)) {
+            console.error('The ISBN is not numeric.');
+            res.status(400).send({
+                message: 'Can not parse ISBN.',
+            });
+        } else if (req.query.isbn.length != 13) {
+            console.error('The ISBN is not 13 digits.');
+            res.status(400).send({
+                message: 'ISBN must be 13 characters.',
+            });
+        } else {
+            next();
+        }
     }
 };
 
@@ -134,12 +137,18 @@ const validISBN = (req: Request, res: Response) => {
  *
  * @param req The HTTP request.
  * @param res The HTTP response.
+ * @param next The next middleware function to run.
  */
-const validTitle = (req: Request, res: Response) => {
-    if (req.query.title && String(req.query.title).trim().length == 0) {
-        console.error('Title cannot be blank.');
+const validTitle = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Title Check');
+    if (
+        !req.query.title ||
+        validationFunctions.isStringProvided(req.query.title)
+    ) {
+        next();
+    } else {
         res.status(400).send({
-            message: 'Title cannot be blank.',
+            message: 'Could not parse title.',
         });
     }
 };
@@ -149,51 +158,118 @@ const validTitle = (req: Request, res: Response) => {
  *
  * @param req The HTTP request.
  * @param res The HTTP response.
+ * @param next The next middleware function to run.
  */
-const validAuthor = (req: Request, res: Response) => {
-    if (req.query.author && String(req.query.author).trim().length == 0) {
-        console.error('Author cannot be blank.');
+const validAuthor = (req: Request, res: Response, next: NextFunction) => {
+    console.log('author check');
+    if (
+        !req.query.author ||
+        validationFunctions.isStringProvided(req.query.author)
+    ) {
+        next();
+    } else {
         res.status(400).send({
-            message: 'Author cannot be blank.',
+            message: 'Could not parse author name.',
         });
     }
 };
 
 /**
- * Check wehther values for minimum rating and maximum rating are valid. If not, send 400 in response.
- * If min is not entered, set to default value 1. If max is not entered set to default value 5.
- * Conditions of invalid value:
- * - Min is not a numeric value or is greater than upper bound of rating 5.
- * - Max is not a numeric value or is less than lower bound of rating 1.
- * - Min is greater than max.
+ * Checks if min and max or provided and well-formed. Min must be greater than 0, Max must be less than 6, min must be less than or equal to max.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ * @param next The next middleware function to run.
+ */
+const validMinMax = (req: Request, res: Response, next: NextFunction) => {
+    console.log('min/max check');
+    if (req.query.min || req.query.max) {
+        req.query.min = isNumberProvided(req.query.min) ? req.query.min : '1';
+        req.query.max = isNumberProvided(req.query.max) ? req.query.max : '5';
+    } else {
+        next();
+    }
+    if (
+        req.query.min ||
+        req.query.max ||
+        (isNumberProvided(req.query.min) && isNumberProvided(req.query.max))
+    ) {
+        req.query.min = clamp(Number(req.query.min), 5, 1).toString();
+        req.query.max = clamp(Number(req.query.max), 5, 1).toString();
+        if (Number(req.query?.min) > Number(req.query?.max)) {
+            res.status(400).send({
+                message: `Minimum rating ${req.query.min} must be less than or equal to maximum rating ${req.query.max}.`,
+            });
+        } else {
+            console.dir(req.query);
+            next();
+        }
+    }
+};
+
+/**
+ * Clamp a given number between the provided min and max values.
+ * @param n the number to clamp
+ * @param max the inclusive maximum value
+ * @param min the inclusive minimum value.
+ */
+function clamp(n: number, max: number, min: number): number {
+    return n <= min ? min : n >= max ? max : n;
+}
+
+
+/**
+ * Check if the ratingtype is valid for ratings. If it is invalid, send 400 in response.
  *
  * @param req The HTTP request.
  * @param res The HTTP response.
  */
-const validMinMax = (req: Request, res: Response) => {
-    // Assign default value if not entered
-    req.query.min = req.query.min ?? '1';
-    req.query.max = req.query.max ?? '5';
-    if (!isNumberProvided(req.query.min) || Number(req.query.min) > 5) {
-        // Invalid min
-        res.status(400).send({
-            message: 'Min is not numeric or is greater than 5.',
-        });
-    } else if (!isNumberProvided(req.query.max) || Number(req.query.max) < 1) {
-        // Invalid max
-        res.status(400).send({
-            message: 'Max is not numeric or is less than 1.',
-        });
-    } else if (
-        isNumberProvided(req.query.min) &&
-        isNumberProvided(req.query.max) &&
-        Number(req.query.min) > Number(req.query.max)
-    ) {
-        // Min greater than max
-        res.status(400).send({
-            message: 'Min is greater than max.',
+const validRatingType = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Rating type check');
+    const validRatingType = ['rating_1_star', 'rating_2_star', 'rating_3_star', 'rating_4_star', 'rating_5_star'];
+
+    if (req.query.ratingtype && String(req.query.ratingtype).trim().length == 0
+        || !validRatingType.includes(String(req.query.ratingtype))){
+        return res.status(400).send({
+            message: 'Invalid rating type.',
         });
     }
+    next();
+};
+
+/**
+ * Check if the changetype is valid for ratings. If it is invalid, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validRatingChangeType = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Rating change type check');
+    const validRatingChangeType = ['decreaseby', 'increaseby', 'setto'];
+
+    if (req.query.changetype && String(req.query.changetype).trim().length == 0
+        || !validRatingChangeType.includes(String(req.query.changetype))){
+        return res.status(400).send({
+            message: 'Invalid rating change type.',
+        });
+    }
+    next();
+};
+
+/**
+ * Check if the value for rating is valid for ratings. If it is invalid, send 400 in response.
+ *
+ * @param req The HTTP request.
+ * @param res The HTTP response.
+ */
+const validRatingValue = (req: Request, res: Response, next: NextFunction) => {
+    console.log('Rating value check');
+    if (req.query.value && isNaN(Number(req.query.value))){
+        return res.status(400).send({
+            message: 'Invalid value to set or change rating by.',
+        });
+    }
+    next();
 };
 
 const parameterChecks = {
@@ -205,6 +281,9 @@ const parameterChecks = {
     validTitle,
     validAuthor,
     validMinMax,
+    validRatingType,
+    validRatingChangeType,
+    validRatingValue
 };
 
 export { parameterChecks };

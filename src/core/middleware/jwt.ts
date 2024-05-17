@@ -28,7 +28,7 @@ export const checkToken = (
                     success: false,
                     message: 'Token is not valid',
                 });
-            } else {
+            } else if (decoded.aud == process.env.DOMAIN) {
                 request.claims = decoded;
                 next();
             }

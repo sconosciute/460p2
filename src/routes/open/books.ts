@@ -18,10 +18,15 @@ const validAuthor = parameterChecks.validAuthor;
 const validMinMax = parameterChecks.validMinMax;
 
 const getBooksAndAuthorsQuery = `
-    SELECT * FROM books INNER JOIN 
-    (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
-        authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
-    ON (books.id = author_table.book)`;
+    SELECT *
+    FROM books
+             INNER JOIN
+         (SELECT book, STRING_AGG(authors.name, ', ') AS authors
+          FROM book_author
+                   INNER JOIN
+               authors ON (authors.id = book_author.author)
+          GROUP BY book) AS author_table
+         ON (books.id = author_table.book)`;
 
 //region helpers
 
@@ -94,40 +99,71 @@ function resultToIBook(toFormat: QueryResult) {
 //region middleware
 
 /**
- * Confirms a query parameter contains a string, a whole string, and nothing but the string
- * @param req HTTP Request
- * @param res HTTP Response
- * @param next Next Middleware Function
- */
-const checkQueryHasString = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    if (validationFunctions.isStringProvided(req.query.q)) {
-        next();
-    } else {
-        res.status(400).send('No query provided to search for');
-    }
-};
-
-/**
  * Confirms a query is formatted correctly to perform a keyword search and does not contain additional symbols.
  * @param req HTTP Request
  * @param res HTTP Response
  * @param next Next Middleware Function
  */
-const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
-    const queryPattern = /^[a-zA-Z0-9\s"-]+$/gm;
-    console.log(`query: ${req.query.q}`);
-    const check = (<string>req.query.q).match(queryPattern);
-    console.dir(check);
-    if (check?.length != 1) {
-        res.status(400).send(
-            'Malformed query\nQuery must be a single + separated list of keywords'
-        );
-    } else {
+const checkKwQueryFormat = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.query.q) {
         next();
+    } else if (!validationFunctions.isStringProvided(req.query.q)) {
+        res.status(400).send({
+            message: 'Keyword query q must be a string.',
+        });
+    } else {
+        const queryPattern = /^[a-zA-Z0-9\s"-]+$/gm;
+        console.log(`query: ${req.query.q}`);
+        const check = (<string>req.query.q).match(queryPattern);
+        console.dir(check);
+        if (check?.length != 1) {
+            res.status(400).send({
+                message:
+                    'Malformed query\n Keyword query q must be a web search format and may include alphanumeric characters as well as - and "',
+            });
+        } else {
+            next();
+        }
+    }
+};
+
+const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
+    if (Object.keys(req.query).length > 0) {
+        console.log(
+            '\n\nRECEIVED QUERY============================================================'
+        );
+        console.dir(req.query);
+        next();
+    } else {
+        res.status(400).send({
+            message: 'Search requires at least one query parameter.',
+        });
+    }
+};
+
+const performKeywordSearch = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.query.q) {
+        next();
+    } else {
+        const query = `SELECT *,
+                              ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank,
+                              get_authors(id)                                      AS authors
+                       FROM books
+                       WHERE kw_vec @@ websearch_to_tsquery('english', $1)
+                       ORDER BY rank DESC`;
+        const ans = await pool.query(query, [req.query.q]);
+
+        res.setHeader('Content-Type', 'application/json').send({
+            books: resultToIBook(ans),
+        });
     }
 };
 
@@ -204,12 +240,14 @@ bookRouter.get(
  * @apiQuery {String} [title] The title of the book to search for.
  * @apiQuery {Number} [isbn] The ISBN of the book to search for.
  * @apiQuery {String} [author] The author's first and/or last name.
- * @apiQuery {Number{1-5}} [min] The minimum rating.
- * @apiQuery {Number{1-5}} [max] The maximum rating.
+ * @apiQuery {Number{1-5}} [min] The minimum rating. Will be clamped between 1-5, malformed input will be treated as 1.
+ * @apiQuery {Number{1-5}} [max] The maximum rating. Will be clamped between 1-5, Malformed input will be treated as 5.
+ * @apiQuery {Number} offset=15 The number of books display per page.
+ * @apiQuery {Number} page=1 The page number that starts from one.
  *
  * @apiSuccess (200 Success) {Array<IBook>} books A list of books match the parameters entered.
  *
- * @apiError (400 No parameter) {String} message "Search required at least one query parameter."
+ * @apiError (400 No parameter) {String} message "None of the required parameter is entered."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
  * @apiError (400 Invalid Min/Max) {String} message "Min is not numeric or is greater than 5."
@@ -222,105 +260,63 @@ bookRouter.get(
  */
 bookRouter.get(
     '/search',
-    (req: Request, res: Response, next: NextFunction) => {
-        if (Object.keys(req.query).length > 0) {
-            next();
-        } else {
-            res.status(400).send({
-                message: 'Search required at least one query parameter.',
-            });
-        }
-    },
-    (req: Request, res: Response, next: NextFunction) => {
-        if (!req.query.q) {
-            if (!res.writableEnded && req.query.title) validTitle(req, res);
-            if (!res.writableEnded && req.query.isbn) validISBN(req, res);
-            if (!res.writableEnded && req.query.author) validAuthor(req, res);
-            if (!res.writableEnded && (req.query.min || req.query.max))
-                validMinMax(req, res);
-        }
-        if (String(res.statusCode).startsWith('2')) next();
-    },
+    checkHasQuery,
+    checkKwQueryFormat,
+    performKeywordSearch,
+    validOffset,
+    validPage,
+    validTitle,
+    validISBN,
+    validAuthor,
+    validMinMax,
     (req: Request, res: Response) => {
-        let getBooks = `${getBooksAndAuthorsQuery} WHERE`;
-        let count = 1;
+        let valIndex = 1;
         const values = [];
-        if (!req.query.q) {
-            // If isbn entered, append query for ISBN
-            if (req.query.isbn) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` isbn13 = $${count++}`);
-                values.push(String(req.query.isbn));
-            }
+        const wheres = [];
 
-            // If title entered, append query for title
-            if (req.query.title) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` (title LIKE $${count++} 
-                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2)`);
-                values.push(
-                    String(req.query.title),
-                    String(req.query.title).charAt(0).toUpperCase() +
-                        String(req.query.title).slice(1),
-                    String(req.query.title)
-                );
-            }
-
-            // If author entered, append query for author
-            if (req.query.author) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` authors LIKE $${count++}`);
-                values.push(String('%' + req.query.author + '%'));
-            }
-
-            // If min and/or max entered, append query for min and/or max rating
-            if (req.query.min || req.query.max) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(
-                    ` rating_avg BETWEEN $${count++} AND $${count++}`
-                );
-                values.push(String(req.query.min), String(req.query.max));
-            }
+        if (req.query.isbn) {
+            wheres.push(`isbn13 = $${valIndex++}`);
+            values.push(String(req.query.isbn));
         }
-        queryAndResponse(getBooks, values, res, false);
-    }
-);
 
-/**
- * @api {get} /book/search
- *
- * @apiDescription Performs a keyword search of all books in the database checking for title or author matches. May only contain alphanumeric characters, no white space or special characters. ex: "this+is+a+valid+query".
- *
- * @apiName getKwSearch
- * @apiGroup open
- *
- * @apiParam {string} q A web search formatted query. May use - to exclude terms or place words in quotes to require an exact match. ex: This is a "valid" -query
- *
- * @apiSuccess (200) {Array<IBook>} returns an array containing all matching books
- * @apiSuccess (204) {String} The query was successfully run, but no books were found.
- *
- * @apiError (400: Bad Request) {String} Client provided no or malformed query parameter.
- * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
- *
- */
-bookRouter.get(
-    '/search',
-    checkQueryHasString,
-    checkQueryFormat,
-    async (req: Request, res: Response, next: NextFunction) => {
-        const query = `SELECT *, ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
-                       FROM books
-                       WHERE kw_vec @@ websearch_to_tsquery('english', $1)
-                       ORDER BY rank DESC`;
-        const ans = await pool.query(query, [req.query.q]);
+        // If title entered, append query for title
+        if (req.query.title) {
+            wheres.push(
+                `(title LIKE $${valIndex++} OR title LIKE $${valIndex++} OR DIFFERENCE(title, $${valIndex++}) > 2)`
+            );
+            values.push(
+                String(req.query.title),
+                String(req.query.title).charAt(0).toUpperCase() +
+                    String(req.query.title).slice(1),
+                String(req.query.title)
+            );
+        }
 
-        res.setHeader('Content-Type', 'application/json').send(
-            resultToIBook(ans)
-        );
+        // If author entered, append query for author
+        if (req.query.author) {
+            wheres.push(`authors LIKE $${valIndex++}`);
+            values.push(String('%' + req.query.author + '%'));
+        }
+
+        // If min and/or max entered, append query for min and/or max rating
+        if (req.query.min && req.query.max) {
+            wheres.push(`rating_avg BETWEEN $${valIndex++} AND $${valIndex++}`);
+            values.push(String(req.query.min), String(req.query.max));
+        }
+
+        const where = wheres.join(' AND ');
+        if (where.length < 1) {
+            res.status(400).send({
+                message:
+                    'Failed to parse query, please make sure input is provided and well formed.',
+            });
+        } else {
+            const query = `${getBooksAndAuthorsQuery} WHERE ${where} OFFSET $${valIndex++} LIMIT $${valIndex++}`;
+            const offset = Number(req.query.offset);
+            const page = Number(req.query.page);
+            values.push(String(offset * (page - 1)), String(req.query.offset));
+            queryAndResponse(query, values, res, false);
+        }
     }
 );
 
