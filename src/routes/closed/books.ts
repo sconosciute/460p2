@@ -3,9 +3,9 @@ import express, { NextFunction, Request, Response, Router } from 'express';
 // Access the connection to Postgres Database
 import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
-import { IBook, IRatings, IUrlIcon } from '../../core/models';
+import { IBook, IJwtRequest, IRatings, IUrlIcon } from '../../core/models';
 import { QueryResult } from 'pg';
-import { roleCheck } from './index';
+
 
 const bookRouter: Router = express.Router();
 
@@ -15,6 +15,24 @@ const validISBN = parameterChecks.validISBN;
 const validRatingValue = parameterChecks.validRatingValue;
 
 //region middleware
+const roleCheck = (permission: string) => {
+    return async (req: IJwtRequest, res: Response, next: NextFunction) => {
+        const query = 'SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_id WHERE account_id = $1';
+        const values = [req.claims.sub];
+        const perm = permission.toLowerCase();
+
+        const ans = await pool.query(query, values);
+
+        if (ans.rows[0][perm] || ans.rows[0].admin) {
+            next();
+        } else {
+            res.status(403).send({
+                message: 'User not authorized to perform this action.',
+            });
+        }
+    };
+};
+
 const checkUpdatePerm = roleCheck("update_add");
 const checkDeletePerm = roleCheck("delete");
 //endregion middleware
