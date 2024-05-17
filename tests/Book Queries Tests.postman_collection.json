@@ -943,6 +943,47 @@
 					"response": []
 				},
 				{
+					"name": "no required parameter entered",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 No Parameter\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?random=random",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "random",
+									"value": "random"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "title - parameter with whitespace only",
 					"event": [
 						{

@@ -329,10 +329,12 @@ bookRouter.get(
  * @apiQuery {String} [author] The author's first and/or last name.
  * @apiQuery {Number{1-5}} [min] The minimum rating.
  * @apiQuery {Number{1-5}} [max] The maximum rating.
+ * @apiQuery {Number} offset=15 The number of books display per page.
+ * @apiQuery {Number} page=1 The page number that starts from one.
  *
  * @apiSuccess (200 Success) {Array<IBook>} books A list of books match the parameters entered.
  *
- * @apiError (400 No parameter) {String} message "Search required at least one query parameter."
+ * @apiError (400 No parameter) {String} message "None of the required parameter is entered."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
  * @apiError (400 Invalid Min/Max) {String} message "Min is not numeric or is greater than 5."
@@ -345,12 +347,20 @@ bookRouter.get(
  */
 bookRouter.get(
     '/search',
+    validOffset,
+    validPage,
     (req: Request, res: Response, next: NextFunction) => {
-        if (Object.keys(req.query).length > 0) {
+        if (
+            req.query.title ||
+            req.query.isbn ||
+            req.query.author ||
+            req.query.min ||
+            req.query.max
+        ) {
             next();
         } else {
             res.status(400).send({
-                message: 'Search required at least one query parameter.',
+                message: 'None of the required parameter is entered.',
             });
         }
     },
@@ -408,6 +418,12 @@ bookRouter.get(
                 );
                 values.push(String(req.query.min), String(req.query.max));
             }
+
+            // Add page number and number of book per page
+            const offset = Number(req.query.offset);
+            const page = Number(req.query.page);
+            getBooks = getBooks.concat(` OFFSET $${count++} LIMIT $${count++}`);
+            values.push(String(offset * (page - 1)), String(req.query.offset));
         }
         queryAndResponse(getBooks, values, res, false);
     }
