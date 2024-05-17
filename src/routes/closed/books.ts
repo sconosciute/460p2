@@ -23,7 +23,7 @@ const roleCheck = (permission: string) => {
 
         const ans = await pool.query(query, values);
 
-        if (ans.rows[0][perm]) {
+        if (ans.rows[0][perm] || ans.rows[0].admin) {
             next();
         } else {
             res.status(403).send({
