@@ -133,7 +133,7 @@ const checkKwQueryFormat = (req: Request, res: Response, next: NextFunction) => 
         if (check?.length != 1) {
             res.status(400).send(
                 {
-                    message: 'Malformed query\n Keyword query q must be a web search format and may include alphanumeric characters as well as - and "'
+                    message: 'Malformed query\n Keyword query q must be a web search format and may include alphanumeric characters as well as - and "',
                 },
             );
         } else {
@@ -144,7 +144,7 @@ const checkKwQueryFormat = (req: Request, res: Response, next: NextFunction) => 
 
 const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
     if (Object.keys(req.query).length > 0) {
-        console.log("\n\nRECEIVED QUERY============================================================")
+        console.log('\n\nRECEIVED QUERY============================================================');
         console.dir(req.query);
         next();
     } else {
@@ -158,15 +158,17 @@ const performKeywordSearch = async (req: Request, res: Response, next: NextFunct
     if (!req.query.q) {
         next();
     } else {
-        const query = `SELECT *, ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
-                   FROM books
-                   WHERE kw_vec @@ websearch_to_tsquery('english', $1)
-                   ORDER BY rank DESC`;
+        const query = `SELECT *,
+                              ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank,
+                              get_authors(id)                                      AS authors
+                       FROM books
+                       WHERE kw_vec @@ websearch_to_tsquery('english', $1)
+                       ORDER BY rank DESC`;
         const ans = await pool.query(query, [req.query.q]);
 
         res.setHeader('Content-Type', 'application/json').send(
             {
-                books: resultToIBook(ans)
+                books: resultToIBook(ans),
             },
         );
     }
@@ -224,7 +226,7 @@ bookRouter.get(
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY ${orderQuery[String(req.query.orderby)]} OFFSET $1 LIMIT $2`;
         const values = [String(offset * (page - 1)), String(req.query.offset)];
         queryAndResponse(getBooks, values, res, true);
-    }
+    },
 );
 
 //endregion getAll
@@ -305,13 +307,13 @@ bookRouter.get(
             values.push(String(req.query.min), String(req.query.max));
         }
 
-        const where = wheres.join(" AND ");
+        const where = wheres.join(' AND ');
         if (where.length < 1) {
             res.status(400).send({
-                message: "Failed to parse query, please make sure input is provided and well formed."
-            })
+                message: 'Failed to parse query, please make sure input is provided and well formed.',
+            });
         } else {
-            const query = `${getBooksAndAuthorsQuery} WHERE ` +  where;
+            const query = `${getBooksAndAuthorsQuery} WHERE ` + where;
 
             queryAndResponse(query, values, res, false);
         }
