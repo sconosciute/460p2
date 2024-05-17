@@ -25,15 +25,19 @@ const validRatingValue = parameterChecks.validRatingValue;
  * @apiName UpdateBookRating
  * @apiGroup books
  *
- * @apiParam {Int} isbn The ISBN of the book to be updated.
+ * @apiParam {Int} isbn The ISBN13 of the book to be updated.
  * @apiParam {String="rating_1_star","rating_2_star","rating_3_star", "rating_4_star", "rating_5_star"} ratingtype="rating_1" Which rating to update.
  * @apiParam {String="increaseby","decreaseby","setto"} changetype="increaseby" How to update the rating.
  * @apiParam {Int} value The number to increase or decrease the rating by, or set the rating to this number.
  *
  * @apiSuccess (200: Success) {String} Book ratings updated successfully.
  *
+ * @apiError (400: Bad request) {String} message Invalid rating type.
+ * @apiError (400: Bad request) {String} message Invalid rating change type.
+ * @apiError (400: Bad request) {String} message Invalid value to set or change rating by.
+ * @apiError (400: Bad request) {String} message Update incomplete: No book with this ISBN.
+ * @apiError (400: Bad request) {String} message Update incomplete: Rating amount cannot be a negative number.
  * @apiError (401: Unauthorized) {String} message User does not have permission to update books.
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
  */
 // Only works for book attributes for now
 bookRouter.put(
