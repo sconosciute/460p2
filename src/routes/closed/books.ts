@@ -5,6 +5,7 @@ import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IBook, IRatings, IUrlIcon } from '../../core/models';
 import { QueryResult } from 'pg';
+import { roleCheck } from './index';
 
 const bookRouter: Router = express.Router();
 
@@ -12,6 +13,11 @@ const validRatingType = parameterChecks.validRatingType;
 const validRatingChangeType = parameterChecks.validRatingChangeType;
 const validISBN = parameterChecks.validISBN;
 const validRatingValue = parameterChecks.validRatingValue;
+
+//region middleware
+const checkUpdatePerm = roleCheck("update_add");
+const checkDeletePerm = roleCheck("delete");
+//endregion middleware
 
 /**
  * @api {put} /books/update
@@ -226,8 +232,8 @@ bookRouter.post('/addBook', (req, res) => {
  * @apiName DeleteBook
  * @apiGroup books
  *
- * @apiParam {Number} id The primary key ID of the book to delete
- * @apiParam {Number} isbn The isbn of the book to delete
+ * @apiQuery {Number} id The primary key ID of the book to delete
+ * @apiQuery {Number} isbn The isbn of the book to delete
  *
  * @apiSuccess (200) {String} Success book was deleted!
  *
@@ -235,14 +241,12 @@ bookRouter.post('/addBook', (req, res) => {
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFunction) => {
-    const isbn = req.params.isbn;
+bookRouter.delete('/deleteIsbn',
+    checkDeletePerm,
+    parameterChecks.validISBN,
+    (req: Request, res: Response, next: NextFunction) => {
+    const isbn = req.query.isbn as string;
 
-    if (!/^\d{13}$/.test(isbn)) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
     pool.query('DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
         .then(() => {
             return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);

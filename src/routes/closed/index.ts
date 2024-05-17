@@ -13,7 +13,7 @@ closedRoutes.use('/books', checkToken, bookRouter);
 
 const roleCheck = (permission: string) => {
     return async (req: IJwtRequest, res: Response, next: NextFunction) => {
-        const query = "SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_id WHERE account_id = $1"
+        const query = 'SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_id WHERE account_id = $1';
         const values = [req.claims.sub];
         const perm = permission.toLowerCase();
 
@@ -23,10 +23,10 @@ const roleCheck = (permission: string) => {
             next();
         } else {
             res.status(403).send({
-                message: "User not authorized to perform this action."
-            })
+                message: 'User not authorized to perform this action.',
+            });
         }
-    }
-}
+    };
+};
 
-export { closedRoutes };
+export { closedRoutes, roleCheck };
