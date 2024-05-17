@@ -237,11 +237,15 @@ bookRouter.get(
  * @apiName SearchByParameter
  * @apiGroup Books
  *
+ * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
+ * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
  * @apiQuery {String} [title] The title of the book to search for.
  * @apiQuery {Number} [isbn] The ISBN of the book to search for.
  * @apiQuery {String} [author] The author's first and/or last name.
- * @apiQuery {Number{1-5}} [min] The minimum rating. Will be clamped between 1-5, malformed input will be treated as 1.
- * @apiQuery {Number{1-5}} [max] The maximum rating. Will be clamped between 1-5, Malformed input will be treated as 5.
+ * @apiQuery {Number{1-5}} [min] The minimum rating. Will be clamped between 1-5, malformed input
+ * will be treated as 1.
+ * @apiQuery {Number{1-5}} [max] The maximum rating. Will be clamped between 1-5, Malformed input
+ * will be treated as 5.
  * @apiQuery {Number} offset=15 The number of books display per page.
  * @apiQuery {Number} page=1 The page number that starts from one.
  *
@@ -250,8 +254,6 @@ bookRouter.get(
  * @apiError (400 No parameter) {String} message "None of the required parameter is entered."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
- * @apiError (400 Invalid Min/Max) {String} message "Min is not numeric or is greater than 5."
- * @apiError (400 Invalid Min/Max) {String} message "Max is not numeric or is less than 1."
  * @apiError (400 Invalid Min/Max) {String} message "Min is greater than max."
  * @apiError (400 Blank parameter) {String} message "Title cannot be blank."
  * @apiError (400 Blank parameter) {String} message "ISBN cannot be blank."

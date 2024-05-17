@@ -189,11 +189,7 @@ const validMinMax = (req: Request, res: Response, next: NextFunction) => {
     } else {
         next();
     }
-    if (
-        req.query.min ||
-        req.query.max ||
-        (isNumberProvided(req.query.min) && isNumberProvided(req.query.max))
-    ) {
+    if (isNumberProvided(req.query.min) && isNumberProvided(req.query.max)) {
         req.query.min = clamp(Number(req.query.min), 5, 1).toString();
         req.query.max = clamp(Number(req.query.max), 5, 1).toString();
         if (Number(req.query?.min) > Number(req.query?.max)) {
@@ -217,7 +213,6 @@ function clamp(n: number, max: number, min: number): number {
     return n <= min ? min : n >= max ? max : n;
 }
 
-
 /**
  * Check if the ratingtype is valid for ratings. If it is invalid, send 400 in response.
  *
@@ -226,10 +221,19 @@ function clamp(n: number, max: number, min: number): number {
  */
 const validRatingType = (req: Request, res: Response, next: NextFunction) => {
     console.log('Rating type check');
-    const validRatingType = ['rating_1_star', 'rating_2_star', 'rating_3_star', 'rating_4_star', 'rating_5_star'];
+    const validRatingType = [
+        'rating_1_star',
+        'rating_2_star',
+        'rating_3_star',
+        'rating_4_star',
+        'rating_5_star',
+    ];
 
-    if (req.query.ratingtype && String(req.query.ratingtype).trim().length == 0
-        || !validRatingType.includes(String(req.query.ratingtype))){
+    if (
+        (req.query.ratingtype &&
+            String(req.query.ratingtype).trim().length == 0) ||
+        !validRatingType.includes(String(req.query.ratingtype))
+    ) {
         return res.status(400).send({
             message: 'Invalid rating type.',
         });
@@ -243,12 +247,19 @@ const validRatingType = (req: Request, res: Response, next: NextFunction) => {
  * @param req The HTTP request.
  * @param res The HTTP response.
  */
-const validRatingChangeType = (req: Request, res: Response, next: NextFunction) => {
+const validRatingChangeType = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
     console.log('Rating change type check');
     const validRatingChangeType = ['decreaseby', 'increaseby', 'setto'];
 
-    if (req.query.changetype && String(req.query.changetype).trim().length == 0
-        || !validRatingChangeType.includes(String(req.query.changetype))){
+    if (
+        (req.query.changetype &&
+            String(req.query.changetype).trim().length == 0) ||
+        !validRatingChangeType.includes(String(req.query.changetype))
+    ) {
         return res.status(400).send({
             message: 'Invalid rating change type.',
         });
@@ -264,7 +275,7 @@ const validRatingChangeType = (req: Request, res: Response, next: NextFunction) 
  */
 const validRatingValue = (req: Request, res: Response, next: NextFunction) => {
     console.log('Rating value check');
-    if (req.query.value && isNaN(Number(req.query.value))){
+    if (req.query.value && isNaN(Number(req.query.value))) {
         return res.status(400).send({
             message: 'Invalid value to set or change rating by.',
         });
@@ -283,7 +294,7 @@ const parameterChecks = {
     validMinMax,
     validRatingType,
     validRatingChangeType,
-    validRatingValue
+    validRatingValue,
 };
 
 export { parameterChecks };

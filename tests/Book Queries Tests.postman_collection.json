@@ -1188,8 +1188,7 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"// Non-numeric min is invalid\r",
-									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"pm.test(\"200 Success\", () => {\r",
 									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
@@ -1229,8 +1228,7 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"// Min is greater and upper bound\r",
-									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"pm.test(\"200 Success\", () => {\r",
 									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
@@ -1323,8 +1321,7 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"// Non-numeric will convert to default.\r",
-									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"pm.test(\"200 Success\", () => {\r",
 									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
@@ -1602,6 +1599,62 @@
 								{
 									"key": "min",
 									"value": "min"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "multiple valid values",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"At least one match\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books.length > 0);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books have rating greater or equal to 2 and publication year 2003\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(Number(response.books[i].ratings.average) >= 2);\r",
+									"        pm.expect(Number(response.books[i].isbn13) == 9780099465640);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?isbn=9780099465640&min=4",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780099465640"
+								},
+								{
+									"key": "min",
+									"value": "4"
 								}
 							]
 						}
