@@ -18,133 +18,15 @@ const validAuthor = parameterChecks.validAuthor;
 const validMinMax = parameterChecks.validMinMax;
 
 const getBooksAndAuthorsQuery = `
-    SELECT * FROM books INNER JOIN 
-    (SELECT book, STRING_AGG(authors.name, ', ') AS authors FROM book_author INNER JOIN 
-        authors ON (authors.id = book_author.author)GROUP BY book) AS author_table
-    ON (books.id = author_table.book)`;
-
-//region Post/Delete
-/**
- * @api {post} /books Request to add a new book
- *
- * @apiDescription This api allows an authenticated user with the correct permission to add a new book in the database,
- * with all the required information.
- *
- * @apiName PostAddBook
- * @apiGroup books
- *
- * @apiBody {number} id The added book's id
- * @apiBody {number} isbn-13 An identifier of the book
- * @apiBody {string} authors The creator of the book can have more than one
- * @apiBody {number} publication year A number that shows when the book was published
- * @apiBody {string} original_title Name the book was first given
- * @apiBody {string} title Another name for the book
- * @apiBody {number} average rating The average amount of rate from 1-5
- * @apiBody {number} ratings count total amount of time the book was rated
- * @apiBody {number} rating_1 Number of 1-star rating on this book.
- * @apiBody {number} rating_2 Number of 2-star rating on this book.
- * @apiBody {number} rating_3 Number of 3-star rating on this book.
- * @apiBody {number} rating_4 Number of 4-star rating on this book.
- * @apiBody {number} rating_5 Number of 5-star rating on this book.
- * @apiBody {string} image_url The url of the image
- * @apiBody {string} small_image_url The url of the small image of the book
- *
- *
- *
- * @apiSuccess (201) {String} Success new book was added to the database
- *
- * @apiError (400: missing parameter) {String} message "Required information for new book is missing"
- * @apiError (403: unauthorized user) {String} message "You do not have access to add book"
- * @apiError (401: permission denied) {String} message "You do not have permission to add book"
- */
-
-/**
- * @api {delete} /books Request to delete a book
- *
- * @apiDescription Deletes a single book from the database by ID or the ISBN.
- *
- * @apiName DeleteBook
- * @apiGroup books
- *
- * @apiParam {Number} id The primary key ID of the book to delete
- * @apiParam {Number} isbn The isbn of the book to delete
- *
- * @apiSuccess (200) {String} Success book was deleted!
- *
- * @apiError (404) {String} message "No books found matching the criteria"
- * @apiError (401) {String} message "No permission to delete books"
- * @apiError (403) {String} message "Unauthorized user"
- */
-//There is duplicate ISBN numbers in the database which will cause to crash!!!!!
-bookRouter.delete(
-    '/deleteBook/:isbn',
-    (req: Request, res: Response, next: NextFunction) => {
-        const isbn = req.params.isbn;
-        // fixes this error update or delete on table "books" violates foreign key constraint "book_author_book_fkey" on table "book_author"
-        pool.query(
-            'DELETE FROM book_author WHERE book = (SELECT id FROM books WHERE isbn13 = $1)',
-            [isbn]
-        )
-            .then(() => {
-                return pool.query('DELETE FROM books WHERE isbn13 = $1', [
-                    isbn,
-                ]);
-            })
-            .then(() => {
-                res.status(200).send({
-                    message: 'Deleted book.',
-                });
-            })
-            .catch((error) => {
-                console.error(`Server failed to delete book due to ${error}`);
-                res.status(500).send('Server error, so sorry!');
-            });
-    }
-);
-
-/**
- * @api {delete} /books Request to delete a range of books
- *
- * @apiDescription This deletes a range of books within a minimum book ID and maximum book ID
- * inclusively.
- *
- * @apiName DeleteRangeBooks
- * @apiGroup books
- *
- * @apiParam {Number} min_id The minimum ID of the range
- * @apiParam {Number} max_id the maximum ID of the range
- *
- * @apiSuccess (200) {String} Success: Range of books deleted!
- *
- * @apiError (404) {String} message "No books found matching the criteria"
- * @apiError (401) {String} message "No permission to delete books"
- * @apiError (403) {String} message "Unauthorized user"
- */
-bookRouter.delete(
-    '/deleteRangeBooks/:min_id/:max_id',
-    (req: Request, res: Response, next: NextFunction) => {
-        const { min_id, max_id } = req.params;
-        const query =
-            'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
-        pool.query(query, [min_id, max_id])
-            .then(() => {
-                const deleteBooksQuery =
-                    'DELETE FROM books WHERE id >= $1 AND id <= $2;';
-                return pool.query(deleteBooksQuery, [min_id, max_id]);
-            })
-            .then(() => {
-                res.status(200).send({
-                    message: 'Deleted range of books.',
-                });
-            })
-            .catch((error) => {
-                console.error(error);
-                res.status(500).send('Server error, so sorry!');
-            });
-    }
-);
-
-//endregion Post/Delete
+    SELECT *
+    FROM books
+             INNER JOIN
+         (SELECT book, STRING_AGG(authors.name, ', ') AS authors
+          FROM book_author
+                   INNER JOIN
+               authors ON (authors.id = book_author.author)
+          GROUP BY book) AS author_table
+         ON (books.id = author_table.book)`;
 
 //region helpers
 
@@ -217,40 +99,71 @@ function resultToIBook(toFormat: QueryResult) {
 //region middleware
 
 /**
- * Confirms a query parameter contains a string, a whole string, and nothing but the string
- * @param req HTTP Request
- * @param res HTTP Response
- * @param next Next Middleware Function
- */
-const checkQueryHasString = (
-    req: Request,
-    res: Response,
-    next: NextFunction
-) => {
-    if (validationFunctions.isStringProvided(req.query.q)) {
-        next();
-    } else {
-        res.status(400).send('No query provided to search for');
-    }
-};
-
-/**
  * Confirms a query is formatted correctly to perform a keyword search and does not contain additional symbols.
  * @param req HTTP Request
  * @param res HTTP Response
  * @param next Next Middleware Function
  */
-const checkQueryFormat = (req: Request, res: Response, next: NextFunction) => {
-    const queryPattern = /^[a-zA-Z0-9\s"-]+$/gm;
-    console.log(`query: ${req.query.q}`);
-    const check = (<string>req.query.q).match(queryPattern);
-    console.dir(check);
-    if (check?.length != 1) {
-        res.status(400).send(
-            'Malformed query\nQuery must be a single + separated list of keywords'
-        );
-    } else {
+const checkKwQueryFormat = (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.query.q) {
         next();
+    } else if (!validationFunctions.isStringProvided(req.query.q)) {
+        res.status(400).send({
+            message: 'Keyword query q must be a string.',
+        });
+    } else {
+        const queryPattern = /^[a-zA-Z0-9\s"-]+$/gm;
+        console.log(`query: ${req.query.q}`);
+        const check = (<string>req.query.q).match(queryPattern);
+        console.dir(check);
+        if (check?.length != 1) {
+            res.status(400).send({
+                message:
+                    'Malformed query\n Keyword query q must be a web search format and may include alphanumeric characters as well as - and "',
+            });
+        } else {
+            next();
+        }
+    }
+};
+
+const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
+    if (Object.keys(req.query).length > 0) {
+        console.log(
+            '\n\nRECEIVED QUERY============================================================'
+        );
+        console.dir(req.query);
+        next();
+    } else {
+        res.status(400).send({
+            message: 'Search requires at least one query parameter.',
+        });
+    }
+};
+
+const performKeywordSearch = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    if (!req.query.q) {
+        next();
+    } else {
+        const query = `SELECT *,
+                              ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank,
+                              get_authors(id)                                      AS authors
+                       FROM books
+                       WHERE kw_vec @@ websearch_to_tsquery('english', $1)
+                       ORDER BY rank DESC`;
+        const ans = await pool.query(query, [req.query.q]);
+
+        res.setHeader('Content-Type', 'application/json').send({
+            books: resultToIBook(ans),
+        });
     }
 };
 
@@ -327,8 +240,8 @@ bookRouter.get(
  * @apiQuery {String} [title] The title of the book to search for.
  * @apiQuery {Number} [isbn] The ISBN of the book to search for.
  * @apiQuery {String} [author] The author's first and/or last name.
- * @apiQuery {Number{1-5}} [min] The minimum rating.
- * @apiQuery {Number{1-5}} [max] The maximum rating.
+ * @apiQuery {Number{1-5}} [min] The minimum rating. Will be clamped between 1-5, malformed input will be treated as 1.
+ * @apiQuery {Number{1-5}} [max] The maximum rating. Will be clamped between 1-5, Malformed input will be treated as 5.
  * @apiQuery {Number} offset=15 The number of books display per page.
  * @apiQuery {Number} page=1 The page number that starts from one.
  *
@@ -347,119 +260,63 @@ bookRouter.get(
  */
 bookRouter.get(
     '/search',
+    checkHasQuery,
+    checkKwQueryFormat,
+    performKeywordSearch,
     validOffset,
     validPage,
-    (req: Request, res: Response, next: NextFunction) => {
-        if (
-            req.query.title ||
-            req.query.isbn ||
-            req.query.author ||
-            req.query.min ||
-            req.query.max
-        ) {
-            next();
-        } else {
-            res.status(400).send({
-                message: 'None of the required parameter is entered.',
-            });
-        }
-    },
-    (req: Request, res: Response, next: NextFunction) => {
-        if (!req.query.q) {
-            if (!res.writableEnded && req.query.title) validTitle(req, res);
-            if (!res.writableEnded && req.query.isbn) validISBN(req, res);
-            if (!res.writableEnded && req.query.author) validAuthor(req, res);
-            if (!res.writableEnded && (req.query.min || req.query.max))
-                validMinMax(req, res);
-        }
-        if (String(res.statusCode).startsWith('2')) next();
-    },
+    validTitle,
+    validISBN,
+    validAuthor,
+    validMinMax,
     (req: Request, res: Response) => {
-        let getBooks = `${getBooksAndAuthorsQuery} WHERE`;
-        let count = 1;
+        let valIndex = 1;
         const values = [];
-        if (!req.query.q) {
-            // If isbn entered, append query for ISBN
-            if (req.query.isbn) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` isbn13 = $${count++}`);
-                values.push(String(req.query.isbn));
-            }
+        const wheres = [];
 
-            // If title entered, append query for title
-            if (req.query.title) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` (title LIKE $${count++} 
-                            OR title LIKE $${count++} OR DIFFERENCE(title, $${count++}) > 2)`);
-                values.push(
-                    String(req.query.title),
-                    String(req.query.title).charAt(0).toUpperCase() +
-                        String(req.query.title).slice(1),
-                    String(req.query.title)
-                );
-            }
+        if (req.query.isbn) {
+            wheres.push(`isbn13 = $${valIndex++}`);
+            values.push(String(req.query.isbn));
+        }
 
-            // If author entered, append query for author
-            if (req.query.author) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(` authors LIKE $${count++}`);
-                values.push(String('%' + req.query.author + '%'));
-            }
+        // If title entered, append query for title
+        if (req.query.title) {
+            wheres.push(
+                `(title LIKE $${valIndex++} OR title LIKE $${valIndex++} OR DIFFERENCE(title, $${valIndex++}) > 2)`
+            );
+            values.push(
+                String(req.query.title),
+                String(req.query.title).charAt(0).toUpperCase() +
+                    String(req.query.title).slice(1),
+                String(req.query.title)
+            );
+        }
 
-            // If min and/or max entered, append query for min and/or max rating
-            if (req.query.min || req.query.max) {
-                if (!getBooks.endsWith('WHERE'))
-                    getBooks = getBooks.concat(' AND');
-                getBooks = getBooks.concat(
-                    ` rating_avg BETWEEN $${count++} AND $${count++}`
-                );
-                values.push(String(req.query.min), String(req.query.max));
-            }
+        // If author entered, append query for author
+        if (req.query.author) {
+            wheres.push(`authors LIKE $${valIndex++}`);
+            values.push(String('%' + req.query.author + '%'));
+        }
 
-            // Add page number and number of book per page
+        // If min and/or max entered, append query for min and/or max rating
+        if (req.query.min && req.query.max) {
+            wheres.push(`rating_avg BETWEEN $${valIndex++} AND $${valIndex++}`);
+            values.push(String(req.query.min), String(req.query.max));
+        }
+
+        const where = wheres.join(' AND ');
+        if (where.length < 1) {
+            res.status(400).send({
+                message:
+                    'Failed to parse query, please make sure input is provided and well formed.',
+            });
+        } else {
+            const query = `${getBooksAndAuthorsQuery} WHERE ${where} OFFSET $${valIndex++} LIMIT $${valIndex++}`;
             const offset = Number(req.query.offset);
             const page = Number(req.query.page);
-            getBooks = getBooks.concat(` OFFSET $${count++} LIMIT $${count++}`);
             values.push(String(offset * (page - 1)), String(req.query.offset));
+            queryAndResponse(query, values, res, false);
         }
-        queryAndResponse(getBooks, values, res, false);
-    }
-);
-
-/**
- * @api {get} /book/search
- *
- * @apiDescription Performs a keyword search of all books in the database checking for title or author matches. May only contain alphanumeric characters, no white space or special characters. ex: "this+is+a+valid+query".
- *
- * @apiName getKwSearch
- * @apiGroup open
- *
- * @apiParam {string} q A web search formatted query. May use - to exclude terms or place words in quotes to require an exact match. ex: This is a "valid" -query
- *
- * @apiSuccess (200) {Array<IBook>} returns an array containing all matching books
- * @apiSuccess (204) {String} The query was successfully run, but no books were found.
- *
- * @apiError (400: Bad Request) {String} Client provided no or malformed query parameter.
- * @apiError (418: I'm a teapot) {String} Client requested server to make coffee, but only tea is available.
- *
- */
-bookRouter.get(
-    '/search',
-    checkQueryHasString,
-    checkQueryFormat,
-    async (req: Request, res: Response, next: NextFunction) => {
-        const query = `SELECT *, ts_rank(kw_vec, websearch_to_tsquery('english', $1)) AS rank, get_authors(id) AS authors
-                       FROM books
-                       WHERE kw_vec @@ websearch_to_tsquery('english', $1)
-                       ORDER BY rank DESC`;
-        const ans = await pool.query(query, [req.query.q]);
-
-        res.setHeader('Content-Type', 'application/json').send(
-            resultToIBook(ans)
-        );
     }
 );
 
