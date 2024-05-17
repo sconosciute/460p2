@@ -6,6 +6,7 @@ import { ISchemaVersion } from '../models/dbSchema';
 const up1Path = 'migrations/up1.sql';
 const up2Path = 'migrations/up2.sql';
 const up3Path = 'migrations/up3.sql';
+const up4Path = 'migrations/up4.sql';
 
 const pgConfig: PoolConfig =
     process.env.PGHOST !== undefined
@@ -40,10 +41,14 @@ function migrate() {
                     break;
                 case 2 :
                     console.log('Upgrading DB Schema to V3');
-                    upgrade(up3Path)
+                    upgrade(up3Path);
                     break;
                 case 3 :
-                    console.log('DB Schema V3 up to date.');
+                    console.log('Upgrading to DB Schema V4');
+                    upgrade(up4Path);
+                    break;
+                case 4 :
+                    console.log('DB Schema V4 up to date');
                     break;
                 default :
                     throw new Error(`Unrecognized database schema version ${version}, panicking!`);
@@ -54,7 +59,7 @@ function migrate() {
             if (err.code == '42P01') {
                 upgrade(up1Path);
             } else {
-                console.error(`Unable to upgrade database due to ${err}`)
+                console.error(`Unable to upgrade database due to ${err}`);
             }
         });
 }
@@ -62,7 +67,7 @@ function migrate() {
 function upgrade(path: string) {
     try {
         const query = fs.readFileSync(path);
-        console.log("Retrieved migration script, running upgrade");
+        console.log('Retrieved migration script, running upgrade');
         pool.query(query.toString())
             .then(() => console.log('Upgraded DB Schema Successfully'));
     } catch (err) {
