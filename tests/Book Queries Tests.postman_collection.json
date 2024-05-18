@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "affddd05-3727-499a-8f4c-9eabd0cd9234",
+		"_postman_id": "19f0734d-0dd4-494a-8e94-cb1c49e7060f",
 		"name": "Book Queries Tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "34249614"
+		"_exporter_id": "35010674"
 	},
 	"item": [
 		{
@@ -2850,6 +2850,1370 @@
 							"path": [
 								"users",
 								"newRole"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 1-star increase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780439023480&ratingtype=rating_1_star&changetype=increaseby&value=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780439023480"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_1_star"
+								},
+								{
+									"key": "changetype",
+									"value": "increaseby"
+								},
+								{
+									"key": "value",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 2-star increase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780307948690&ratingtype=rating_2_star&changetype=increaseby&value=7",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780307948690"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_2_star"
+								},
+								{
+									"key": "changetype",
+									"value": "increaseby"
+								},
+								{
+									"key": "value",
+									"value": "7"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 3-star increase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780439554930&ratingtype=rating_3_star&changetype=increaseby&value=39",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780439554930"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_3_star"
+								},
+								{
+									"key": "changetype",
+									"value": "increaseby"
+								},
+								{
+									"key": "value",
+									"value": "39"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 4-star increase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780060764890&ratingtype=rating_4_star&changetype=increaseby&value=13",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780060764890"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_4_star"
+								},
+								{
+									"key": "changetype",
+									"value": "increaseby"
+								},
+								{
+									"key": "value",
+									"value": "13"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 5-star increase",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780143038410&ratingtype=rating_5_star&changetype=increaseby&value=1000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780143038410"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_5_star"
+								},
+								{
+									"key": "changetype",
+									"value": "increaseby"
+								},
+								{
+									"key": "value",
+									"value": "1000"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 1-star set",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9781565125600&ratingtype=rating_1_star&changetype=setto&value=13280",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9781565125600"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_1_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "13280"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 2-star set",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780307347980&ratingtype=rating_2_star&changetype=setto&value=32663",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780307347980"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_2_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "32663"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 3-star set",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780439554930&ratingtype=rating_3_star&changetype=setto&value=173849",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780439554930"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_3_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "173849"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 4-star set",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780316160190&ratingtype=rating_4_star&changetype=setto&value=392772",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780316160190"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_4_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "392772"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 5-star set",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780316160190&ratingtype=rating_5_star&changetype=setto&value=585377",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780316160190"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_5_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "585377"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 1-star decrease",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780060513030&ratingtype=rating_1_star&changetype=decreaseby&value=15",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780060513030"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_1_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "15"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 2-star decrease",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780060513030&ratingtype=rating_2_star&changetype=decreaseby&value=333",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780060513030"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_2_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "333"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 3-star decrease",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780007442910&ratingtype=rating_3_star&changetype=decreaseby&value=188",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780007442910"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_3_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "188"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 4-star decrease",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780141439470&ratingtype=rating_4_star&changetype=decreaseby&value=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780141439470"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_4_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - valid 5-star decrease",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 200 status\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Book ratings updated successfully.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780450040180&ratingtype=rating_5_star&changetype=decreaseby&value=2000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780450040180"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_5_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "2000"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid ISBN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 400 status\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Update incomplete: No book with this ISBN.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=0001112220000&ratingtype=rating_5_star&changetype=decreaseby&value=2000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "0001112220000"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_5_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "2000"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid decrease value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 400 status\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Update incomplete: Rating amount cannot be a negative number.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780316068050&ratingtype=rating_1_star&changetype=decreaseby&value=50000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780316068050"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_1_star"
+								},
+								{
+									"key": "changetype",
+									"value": "decreaseby"
+								},
+								{
+									"key": "value",
+									"value": "50000"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid set value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 400 status\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Update incomplete: Rating amount cannot be a negative number.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780316068050&ratingtype=rating_4_star&changetype=setto&value=-1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780316068050"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_4_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "-1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid; unauthorized",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 403 status\", () => {\r",
+									"    pm.response.to.have.status(403);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Token is not valid');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "\"not a real token!\"",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780743247540&ratingtype=rating_1_star&changetype=setto&value=10000000",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780743247540"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_1_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "10000000"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid rating type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 400 status\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Invalid rating type.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780141439600&ratingtype=rating_10_star&changetype=increaseby&value=1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780141439600"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_10_star"
+								},
+								{
+									"key": "changetype",
+									"value": "increaseby"
+								},
+								{
+									"key": "value",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid rating change type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 400 status\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Invalid rating change type.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780141439600&ratingtype=rating_2_star&changetype=multipleby&value=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780141439600"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_2_star"
+								},
+								{
+									"key": "changetype",
+									"value": "multipleby"
+								},
+								{
+									"key": "value",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Rating - invalid value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Expected 400 status\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response body message is correct\", function () {\r",
+									"    pm.expect(response.message).to.eql('Invalid value to set or change rating by.');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/update?isbn=9780141439600&ratingtype=rating_5_star&changetype=setto&value=thirty",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"update"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780141439600"
+								},
+								{
+									"key": "ratingtype",
+									"value": "rating_5_star"
+								},
+								{
+									"key": "changetype",
+									"value": "setto"
+								},
+								{
+									"key": "value",
+									"value": "thirty"
+								}
 							]
 						}
 					},
