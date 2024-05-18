@@ -186,7 +186,7 @@ bookRouter.put(
  * @apiError (401: permission denied) {String} message "You do not have permission to add book"
  */
 
-bookRouter.post('/addBook', async (req, res) => {
+bookRouter.post('/addBook',checkUpdatePerm, async (req, res) => {
     const {
         id,
         isbn13,
