@@ -1,31 +1,28 @@
-import { PoolClient } from 'pg';
-import { pool } from './sql_conn'
+import { PoolClient, QueryResult, QueryResultRow } from 'pg';
+import { pool } from './sql_conn';
 
 class dbClient {
     client: PoolClient;
-    active: boolean;
 
     constructor() {
         pool.connect()
-            .then((conn) => this.client = conn)
+            .then((conn) => this.client = conn);
+    }
+
+    query(text: string, values: Array<string>): Promise<QueryResult | void> {
+        let ret: Promise<QueryResult>;
         this.client.query('BEGIN')
-            .then(() => console.log("Client transaction begun."))
+            .then(() => ret = this.runQuery(text, values));
+        return this.client.query('COMMIT')
+            .then(() => Promise.resolve(ret))
+            .catch((err) => {
+                console.error(`Failed to run query due to ${err}`);
+                return this.client.query('ROLLBACK')
+                    .then(() => Promise.reject(err))
+            });
     }
 
-    query(text: string, values: Array<string>) {
-        if (!this.active) {
-            this.client.query('BEGIN')
-                .then(() => console.log("Client transaction begun."))
-        }
-        this.client.query(text, values)
-            .then((res) => res)
-    }
-
-    finalize() {
-        if (!this.active) {
-            console.log("Transaction already committed")
-        }
-        this.active = false;
-        this.client.query('COMMIT').then((res) => console.log("Transaction committed"));
+    private runQuery(text: string, values: Array<string>) {
+        return this.client.query(text, values).then((result) => result);
     }
 }

@@ -1,0 +1,11 @@
+BEGIN;
+
+TRUNCATE schema_version;
+INSERT INTO schema_version VALUES (2, CURRENT_TIMESTAMP);
+ALTER TABLE account
+    ADD COLUMN IF NOT EXISTS create_date TIME NOT NULL DEFAULT NOW();
+
+CREATE EXTENSION pg_trgm;
+CREATE EXTENSION fuzzystrmatch;
+
+COMMIT;

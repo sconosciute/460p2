@@ -1,0 +1,2919 @@
+{
+	"info": {
+		"_postman_id": "affddd05-3727-499a-8f4c-9eabd0cd9234",
+		"name": "Book Queries Tests",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34249614"
+	},
+	"item": [
+		{
+			"name": "All books sorted by specified attribute",
+			"item": [
+				{
+					"name": "no parameter entered",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Check status code\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Check required field of list of books with default number (15) of books per page\r",
+									"pm.test(\"Response has the field books with length of 15\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books).to.have.lengthOf(15);\r",
+									"})\r",
+									"\r",
+									"// Check if the list of books have certain schema\r",
+									"pm.test(\"List of books has required attributes\", () => {\r",
+									"    pm.expect(response).to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"schema\")));\r",
+									"})\r",
+									"\r",
+									"// Check if the list of books is sorted by title in ascending order\r",
+									"pm.test(\"Books is sorted by title in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) < 1);\r",
+									"    }\r",
+									"})\r",
+									"\r",
+									"// Check if the result is same as requesting page number 1\r",
+									"pm.test(\"Page number should be 1\", () => {\r",
+									"    pm.expect(JSON.stringify(response)).to.be.eql(pm.collectionVariables.get(\"page1\"));\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/all",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sort - option not in list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Invalid sort option will change to default sort option automatically\r",
+									"pm.test(\"Books is sorted by title in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) < 1);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?sort=random",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "random"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sort - asc option",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books is sorted by title in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) < 1);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?sort=asc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "asc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sort - desc option",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books is sorted by title in descending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) > -1);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?sort=desc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "sort",
+									"value": "desc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "offset - negative value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Negative offset will be convert to positive automatically\r",
+									"pm.test(\"Response has the field books with length of 20\", () => {\r",
+									"    pm.expect(response.books).to.have.lengthOf(20);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?offset=-20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "-20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "offset - zero value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Zero offset will be convert to default value automatically\r",
+									"pm.test(\"Response has the field books with length of 15\", () => {\r",
+									"    pm.expect(response.books).to.have.lengthOf(15);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?offset=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "offset - positive value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response has the field books with length of 30\", () => {\r",
+									"    pm.expect(response.books).to.have.lengthOf(30);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?offset=30",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "30"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "offset - non-numeric value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric offset is invalid\r",
+									"pm.test(\"400 Invalid offset\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?offset=offset",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "offset"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "page - negative value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Negative page number should be redirect to page 1\r",
+									"pm.test(\"Page number should be 1\", () => {\r",
+									"    pm.expect(JSON.stringify(response)).to.be.eql(pm.collectionVariables.get(\"page1\"));\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?page=-20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "-20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "page = zero value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Zero page number should be redirect to page 1\r",
+									"pm.test(\"Page number should be 1\", () => {\r",
+									"    pm.expect(JSON.stringify(response)).to.be.eql(pm.collectionVariables.get(\"page1\"));\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?page=0",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "page - positive value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Page number should be 5\", () => {\r",
+									"    pm.expect(String(response.books[0].title).localeCompare(pm.collectionVariables.get(\"page4_last\")) > -1);\r",
+									"    pm.expect(String(response.books[14].title).localeCompare(pm.collectionVariables.get(\"page6_first\")) < 1);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=4\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"page4_last\", res.json().books[14].title);\r",
+									"    }\r",
+									"})\r",
+									"\r",
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=6\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"page6_first\", res.json().books[0].title);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?page=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "page - maximum number",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?offset=1000&page=10\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"last_page\", JSON.stringify(res.json()));\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Page number over the maximum page number will be redirect to last page\r",
+									"// In this case, the last page is 10\r",
+									"pm.test(\"Page number should be 10\", () => {\r",
+									"    pm.expect(JSON.stringify(response)).to.be.eql(pm.collectionVariables.get(\"last_page\"));\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?offset=1000&page=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "offset",
+									"value": "1000"
+								},
+								{
+									"key": "page",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "page - non-numeric value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid page\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?page=page",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "page"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "orderby - option not in list",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Check status code\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Books should be ordered by default attribute 'title'\r",
+									"pm.test(\"Books is sorted by title in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) < 1);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?orderby=random",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "orderby",
+									"value": "random"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "orderby - title option",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Check status code\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books is sorted by title in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) < 1);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?orderby=title",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "orderby",
+									"value": "title"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "orderby - author option",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books is sorted by authors in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(String(response.books[i].authors).localeCompare(String(response.books[i + 1].authors)) < 1);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?orderby=author",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "orderby",
+									"value": "author"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "orderby - year option",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// Sort by year, if same year, sort by title\r",
+									"pm.test(\"Books is sorted by publication year in ascending order\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(Number(response.books[i + 1].publication) <= Number(response.books[i].publication));\r",
+									"        if (Number(response.books[i + 1].publication) == Number(response.books[i].publication)) {\r",
+									"            pm.expect(String(response.books[i].title).localeCompare(String(response.books[i + 1].title)) < 1);\r",
+									"        }\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/all?orderby=year",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"all"
+							],
+							"query": [
+								{
+									"key": "orderby",
+									"value": "year"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							"pm.sendRequest({\r",
+							"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1\",\r",
+							"    method: \"GET\"\r",
+							"}, function(err, res) {\r",
+							"    if (err == null) {\r",
+							"        pm.collectionVariables.set(\"page1\", JSON.stringify(res.json()));\r",
+							"    }\r",
+							"})"
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Search for specific books",
+			"item": [
+				{
+					"name": "no parameter entered",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 No Parameter\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "isbn - non-numeric parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?isbn=abc",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "abc"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "isbn - parameter that's not 13 digits",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?isbn=12345",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "12345"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "isbn - valid numeric parameter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// The given isbn should have at least one match\r",
+									"pm.test(\"At least one match\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books.length > 0);\r",
+									"})\r",
+									"\r",
+									"// Check if the list of books have certain schema\r",
+									"pm.test(\"List of books has required attributes\", () => {\r",
+									"    pm.expect(response).to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"schema\")));\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?isbn=9781423118240",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9781423118240"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "author - valid string",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// The author \"Rowling\" should have at least one match\r",
+									"pm.test(\"At least one match\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books.length > 0);\r",
+									"})\r",
+									"\r",
+									"// Check if the list of books have certain schema\r",
+									"pm.test(\"List of books has required attributes\", () => {\r",
+									"    pm.expect(response).to.have.jsonSchema(JSON.parse(pm.collectionVariables.get(\"schema\")));\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?author=Rowling",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "author",
+									"value": "Rowling"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min - no max",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// The rating 4 - 5 should have at least one match\r",
+									"pm.test(\"At least one match\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books.length > 0);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books have rating between 4 and 5 (inclusively)\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(Number(response.books[i].ratings.average) >= 4);\r",
+									"        pm.expect(Number(response.books[i].ratings.average) <= 5);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=4",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min - non-numeric value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric min is invalid\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=min",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "min"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min - greater than 5",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Min is greater and upper bound\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=6",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "6"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "max - no min",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// The rating 1 - 3 should have at least one match\r",
+									"pm.test(\"At least one match\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books.length > 0);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books have rating between 1 and 3 (inclusively)\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(Number(response.books[i].ratings.average) >= 1);\r",
+									"        pm.expect(Number(response.books[i].ratings.average) <= 3);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?max=3",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "max",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "max - non-numeric value",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric will convert to default.\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?max=max",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "max",
+									"value": "max"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "max - less than 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"const expected = {\r",
+									"    \"books\": []\r",
+									"}\r",
+									"\r",
+									"//Should be converted to min 1, max 1\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"//should receive empty array as no books are rated that low.\r",
+									"pm.test(\"Got no books\", () => {\r",
+									"    pm.response.to.have.jsonBody(expected);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?max=0 ",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "max",
+									"value": "0 "
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min&max - valid values",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"// The rating 2 - 4 should have at least one match\r",
+									"pm.test(\"At least one match\", () => {\r",
+									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
+									"    pm.expect(response.books.length > 0);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Books have rating between 2 and 4 (inclusively)\", () => {\r",
+									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
+									"        pm.expect(Number(response.books[i].ratings.average) >= 2);\r",
+									"        pm.expect(Number(response.books[i].ratings.average) <= 4);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=2&max=4",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "2"
+								},
+								{
+									"key": "max",
+									"value": "4"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min&max - all ratings",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1&offset=10000\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"all_book_count\", res.json().books.length);\r",
+									"    }\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"200 Success\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Rating 1 - 5 includes all books\", () => {\r",
+									"    pm.expect(response.books.length).to.be.eql(pm.collectionVariables.get(\"all_book_count\"))\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=1&max=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "1"
+								},
+								{
+									"key": "max",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "min&max - min greater than max",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"400 Invalid Min/Max\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?min=4&max=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "min",
+									"value": "4"
+								},
+								{
+									"key": "max",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "multiple invalid values",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?isbn=isbn&min=min",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "isbn"
+								},
+								{
+									"key": "min",
+									"value": "min"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "keywordSearch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json()\r",
+									"\r",
+									"const expected = {\r",
+									"    \"books\" : [\r",
+									"    {\r",
+									"        \"isbn13\": 9780439139600,\r",
+									"        \"authors\": \"J.K. Rowling, Mary GrandPré\",\r",
+									"        \"publication\": 2000,\r",
+									"        \"original_title\": \"Harry Potter and the Goblet of Fire\",\r",
+									"        \"title\": \"Harry Potter and the Goblet of Fire (Harry Potter, #4)\",\r",
+									"        \"ratings\": {\r",
+									"            \"average\": 4.53,\r",
+									"            \"count\": 1753043,\r",
+									"            \"rating_1\": 6676,\r",
+									"            \"rating_2\": 20210,\r",
+									"            \"rating_3\": 151785,\r",
+									"            \"rating_4\": 494926,\r",
+									"            \"rating_5\": 1195045\r",
+									"        },\r",
+									"        \"icons\": {\r",
+									"            \"large\": \"https://images.gr-assets.com/books/1361482611m/6.jpg\",\r",
+									"            \"small\": \"https://images.gr-assets.com/books/1361482611s/6.jpg\"\r",
+									"        }\r",
+									"    }\r",
+									"]\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Keyword Search 200\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Got goblet of fire\", () => {\r",
+									"    pm.response.to.have.jsonBody(expected);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?q=harry+potter+\"goblet\"-box",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "harry+potter+\"goblet\"-box"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "malformedKeyword",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const expected = {\r",
+									"    \"message\": \"Malformed query\\n Keyword query q must be a web search format and may include alphanumeric characters as well as - and \\\"\"\r",
+									"}\r",
+									"\r",
+									"pm.test(\"Status 400: Malformed query\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Malformed keyword search query\", () => {\r",
+									"    pm.response.to.have.jsonBody(expected);\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/books/search?q=harry()potter",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"search"
+							],
+							"query": [
+								{
+									"key": "q",
+									"value": "harry()potter"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Closed Routes",
+			"item": [
+				{
+					"name": "Register new user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstname\": \"{{$randomFirstName}}\",\r\n    \"lastname\": \"{{$randomLastName}}\",\r\n    \"username\": \"{{$randomUserName}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"phone\": \"{{$randomPhoneNumber}}\",\r\n    \"role\": 1,\r\n    \"password\": \"password!\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - valid isbn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Success book was deleted!.\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=9780307265430",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780307265430"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - invalid isbn chararacter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Can not parse ISBN.\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=978030a",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "978030a"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - invalid ISBN length",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"ISBN must be 13 characters.\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=978030",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "978030"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - No permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Check for missing auth token\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
+									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//remove the token"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.remove('authorization');"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=1234567891234",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "1234567891234"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - Valid range IDs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"200 Success deleting books\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Range of books deleted!\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=18&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "18"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - invalid range IDs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 error deleting books\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Please provide valid min_id and max_id parameters\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=a&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "a"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - invalid missing range",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 error deleting books\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Min range must be less than max range\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=50&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - invalid mid range ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 error deleting books\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Min range must be less than max range\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=50&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - No permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for missing auth token\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
+									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//remove the token"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.remove('Authorization');"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=19&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "19"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Duplicate ID book",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if ID already exists\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"ID already exists\");\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 295210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"John Smith\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book -Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 201 success if Success, new book was added to the database\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"Success, new book was added to the database\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Missing info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if required information is missing\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"Required information for new book is missing\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Invalid ISBN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if ISBN is invalid\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"ISBN must be exactly 13 digits long and consist only of numbers\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812a\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Invalid ratings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if rating fields are invalid\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"Rating fields must be numbers or decimals\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812123\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": \"a\",\r\n    \"rating_4_star\": \"b\",\r\n    \"rating_5_star\": \"c\",\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - No permission for adding",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Check for missing auth token\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
+									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//remove auth to see"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.remove('Authorization');"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812123\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 1,\r\n    \"rating_4_star\": 2,\r\n    \"rating_5_star\": 3,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get roles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/roles",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change user role",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 16,\r\n    \"newRoleID\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/updateRole",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"updateRole"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"roleName\": \"{{$randomWord}}\",\r\n    \"admin\": true,\r\n    \"updateAdd\": true,\r\n    \"canDelete\": true,\r\n    \"manageUsers\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/newRole",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"newRole"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "localhost:4000",
+			"type": "string"
+		},
+		{
+			"key": "schema",
+			"value": "{\n    \"type\": \"object\",\n    \"properties\": {\n        \"books\": {\n            \"type\": \"array\",\n            \"items\": {\n                \"type\": \"object\",\n                \"properties\": {\n                    \"isbn13\": {\"type\": \"number\"},\n                    \"authors\": {\"type\": \"string\"},\n                    \"publication\": {\"type\": \"number\"},\n                    \"original_title\": {\"type\": \"string\"},\n                    \"title\": {\"type\": \"string\"},\n                    \"ratings\": {\n                        \"type\": \"object\",\n                        \"properties\": {\n                            \"average\": {\"type\": \"number\"},\n                            \"count\": {\"type\": \"number\"},\n                            \"rating_1\": {\"type\": \"number\"},\n                            \"rating_2\": {\"type\": \"number\"},\n                            \"rating_3\": {\"type\": \"number\"},\n                            \"rating_4\": {\"type\": \"number\"},\n                            \"rating_5\": {\"type\": \"number\"}\n                        },\n                        \"required\": [\n                            \"average\",\n                            \"count\",\n                            \"rating_1\",\n                            \"rating_2\",\n                            \"rating_3\",\n                            \"rating_4\",\n                            \"rating_5\"\n                        ]\n                    },\n                    \"icons\": {\n                        \"type\": \"object\",\n                        \"properties\": {\n                            \"large\": {\"type\": \"string\"},\n                            \"small\": {\"type\": \"string\"}\n                        },\n                        \"required\": [\n                            \"large\",\n                            \"small\"\n                        ]\n                    }\n                },\n                \"required\": [\n                    \"isbn13\",\n                    \"authors\",\n                    \"publication\",\n                    \"original_title\",\n                    \"title\",\n                    \"ratings\",\n                    \"icons\"\n                ]\n            }\n        }\n    },\n    \"required\": [\n        \"books\"\n    ]\n}",
+			"type": "string"
+		},
+		{
+			"key": "page1",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "page4_last",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "page6_first",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "last_page",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "all_book_count",
+			"value": ""
+		}
+	]
+}
