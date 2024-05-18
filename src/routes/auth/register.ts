@@ -48,7 +48,6 @@ const isValidRole = async (role: string): Promise<boolean> => {
         rowMode: 'array',
     };
     return await pool.query(q).then((result) => result.rows[0][0]);
-
 };
 
 // Add more/your own email validation here. The *rules* must be documented
@@ -62,7 +61,7 @@ const isValidEmail = (email: string): boolean =>
 const mwCheckEmail = (
     request: Request,
     response: Response,
-    next: NextFunction,
+    next: NextFunction
 ) => {
     console.dir(request.body);
     if (isValidEmail(request.body.email)) {
@@ -75,7 +74,11 @@ const mwCheckEmail = (
     }
 };
 
-const mwCheckProvidedReqParam = (request: Request, response: Response, next: NextFunction) => {
+const mwCheckProvidedReqParam = (
+    request: Request,
+    response: Response,
+    next: NextFunction
+) => {
     //Verify that the caller supplied all the parameters
     //In js, empty strings or null values evaluate to false
     if (
@@ -91,7 +94,11 @@ const mwCheckProvidedReqParam = (request: Request, response: Response, next: Nex
     }
 };
 
-const mwCheckPhone = (request: Request, response: Response, next: NextFunction) => {
+const mwCheckPhone = (
+    request: Request,
+    response: Response,
+    next: NextFunction
+) => {
     if (isValidPhone(request.body.phone)) {
         next();
         return;
@@ -104,7 +111,11 @@ const mwCheckPhone = (request: Request, response: Response, next: NextFunction) 
     }
 };
 
-const mwCheckPassword = (request: Request, response: Response, next: NextFunction) => {
+const mwCheckPassword = (
+    request: Request,
+    response: Response,
+    next: NextFunction
+) => {
     if (isValidPassword(request.body.password)) {
         next();
     } else {
@@ -115,21 +126,27 @@ const mwCheckPassword = (request: Request, response: Response, next: NextFunctio
     }
 };
 
-const mwCheckRole = async (request: Request, response: Response, next: NextFunction) => {
+const mwCheckRole = async (
+    request: Request,
+    response: Response,
+    next: NextFunction
+) => {
     if (await isValidRole(request.body.role)) {
         next();
     } else {
         response.status(400).send({
-            message:
-                'Invalid or missing role  - please refer to documentation',
+            message: 'Invalid or missing role  - please refer to documentation',
         });
     }
 };
 
-const mwRegisterUser = async (req: IUserRequest, res: Response, next: NextFunction) => {
+const mwRegisterUser = async (
+    req: IUserRequest,
+    res: Response,
+    next: NextFunction
+) => {
     console.log(`Registering new user, ${req.body.username}.`);
-    const qAcc =
-        ` INSERT INTO Account(firstname, lastname, username, email, phone, role_id, create_date)
+    const qAcc = ` INSERT INTO Account(firstname, lastname, username, email, phone, role_id, create_date)
           VALUES ($1, $2, $3, $4, $5, $6, NOW())
           RETURNING account_id`;
     const vAcc = [
@@ -143,8 +160,7 @@ const mwRegisterUser = async (req: IUserRequest, res: Response, next: NextFuncti
 
     const salt = generateSalt(32);
     const saltedHash = generateHash(req.body.password, salt);
-    const qCred =
-        `INSERT INTO Account_Credential(account_id, salted_hash, salt)
+    const qCred = `INSERT INTO Account_Credential(account_id, salted_hash, salt)
          VALUES ($1, $2, $3)`;
 
     const db = await pool.connect();
@@ -164,7 +180,6 @@ const mwRegisterUser = async (req: IUserRequest, res: Response, next: NextFuncti
             accessToken,
             id: req.id,
         });
-
     } catch (error) {
         console.error('Failed to register, rolling back.');
         await db.query('ROLLBACK');
@@ -204,8 +219,13 @@ const mwRegisterUser = async (req: IUserRequest, res: Response, next: NextFuncti
  * @apiBody {String} role a role for this user [1-5]
  * @apiBody {String} phone a phone number for this user
  *
- * @apiSuccess (Success 201) {string} accessToken a newly created JWT
- * @apiSuccess (Success 201) {number} id unique user id
+ * @apiSuccess (201 Success) {string} accessToken a newly created JWT
+ * @apiSuccess (201 Success) {number} id unique user id
+ * @apiSuccessExample token-id:
+ *      {
+ *          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+ *          id: 123456789
+ *      }
  *
  * @apiError (400: Missing Parameters) {String} message "Missing required information"
  * @apiError (400: Invalid Password) {String} message "Invalid or missing password  - please refer to documentation"
@@ -223,22 +243,21 @@ registerRouter.post(
     mwCheckPhone,
     mwCheckPassword,
     mwCheckRole,
-    mwRegisterUser,
+    mwRegisterUser
 );
 
-registerRouter.get('/hash_demo', (request, response) => {
-    const password = 'password12345';
+// registerRouter.get('/hash_demo', (request, response) => {
+//     const password = 'password12345';
 
-    const salt = generateSalt(32);
-    const saltedHash = generateHash(password, salt);
-    const unsaltedHash = generateHash(password, '');
+//     const salt = generateSalt(32);
+//     const saltedHash = generateHash(password, salt);
+//     const unsaltedHash = generateHash(password, '');
 
-    response.status(200).send({
-        salt: salt,
-        salted_hash: saltedHash,
-        unsalted_hash: unsaltedHash,
-    });
-});
-
+//     response.status(200).send({
+//         salt: salt,
+//         salted_hash: saltedHash,
+//         unsalted_hash: unsaltedHash,
+//     });
+// });
 
 export { registerRouter };

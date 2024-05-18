@@ -14,7 +14,7 @@ const validISBN = parameterChecks.validISBN;
 const validRatingValue = parameterChecks.validRatingValue;
 
 /**
- * @api {put} /books/update
+ * @api {put} /books/update?isbn:=isbn&ratingtype:=ratingtype&changetype:=changetype&value:=value
  *
  * @apiDescription Allows an authenticated user to update a book's rating.
  *   Retrieves the book to be updated with the ISBN. Updates the amount of
@@ -23,14 +23,14 @@ const validRatingValue = parameterChecks.validRatingValue;
  *   average rating and total rating count into the database.
  *
  * @apiName UpdateBookRating
- * @apiGroup books
+ * @apiGroup Books
  *
- * @apiParam {Int} isbn The ISBN13 of the book to be updated.
- * @apiParam {String="rating_1_star","rating_2_star","rating_3_star", "rating_4_star", "rating_5_star"} ratingtype="rating_1" Which rating to update.
- * @apiParam {String="increaseby","decreaseby","setto"} changetype="increaseby" How to update the rating.
- * @apiParam {Int} value The number to increase or decrease the rating by, or set the rating to this number.
+ * @apiQuery {Number} isbn The ISBN13 of the book to be updated.
+ * @apiQuery {String="rating_1_star","rating_2_star","rating_3_star", "rating_4_star", "rating_5_star"} ratingtype="rating_1" Which rating to update.
+ * @apiQuery {String="increaseby","decreaseby","setto"} changetype="increaseby" How to update the rating.
+ * @apiQuery {Number} value The number to increase or decrease the rating by, or set the rating to this number.
  *
- * @apiSuccess (200: Success) {String} Book ratings updated successfully.
+ * @apiSuccess (200 Success) {String} Book ratings updated successfully.
  *
  * @apiError (400: Bad request) {String} message Invalid rating type.
  * @apiError (400: Bad request) {String} message Invalid rating change type.
@@ -41,7 +41,11 @@ const validRatingValue = parameterChecks.validRatingValue;
  */
 // Only works for book attributes for now
 bookRouter.put(
-    '/update', validISBN, validRatingType, validRatingChangeType, validRatingValue,
+    '/update',
+    validISBN,
+    validRatingType,
+    validRatingChangeType,
+    validRatingValue,
     (req: Request, res: Response) => {
         const isbn = req.query.isbn;
         const ratingtype = req.query.ratingtype;
@@ -51,11 +55,12 @@ bookRouter.put(
         // Build SQL query
         let query = `UPDATE books SET ${ratingtype} = `;
 
-        if(changetype === 'increaseby') {
+        if (changetype === 'increaseby') {
             query += `${ratingtype} + $1 `;
-        } else if(changetype === 'decreaseby') {
+        } else if (changetype === 'decreaseby') {
             query += `${ratingtype} - $1 `;
-        } else { // set
+        } else {
+            // set
             query += `$1 `;
         }
 
@@ -80,22 +85,21 @@ bookRouter.put(
                 const attribute = Object.keys(result.rows[0]);
 
                 // Ensure the rating results in a positive number
-                result.rows.forEach(row => {
-                    attribute.forEach(ratingCount => {
+                result.rows.forEach((row) => {
+                    attribute.forEach((ratingCount) => {
                         const updatedValue = row[ratingCount];
                         if (updatedValue < 0) {
                             throw new Error('negative number');
                         }
                     });
                 });
-
             })
             .then((countPromise) => {
                 // Update total rating count
                 const calcCount = `UPDATE books SET rating_count = rating_1_star + rating_2_star + rating_3_star + rating_4_star + rating_5_star WHERE isbn13 = $1`;
                 return pool.query(calcCount, [isbn]);
             })
-            .then(avgPromise => {
+            .then((avgPromise) => {
                 // Update average rating
                 const calcAvg = `UPDATE books SET rating_avg = ROUND((rating_1_star + 2*rating_2_star + 3*rating_3_star + 4*rating_4_star + 5*rating_5_star) / CAST(rating_count AS DECIMAL(30,1)), 2) WHERE isbn13 = $1`;
                 return pool.query(calcAvg, [isbn]);
@@ -110,56 +114,54 @@ bookRouter.put(
                 return pool.query('COMMIT');
             })
             .catch((error) => {
-                return pool.query('ROLLBACK')
-                    .then(() => {
-                        let errorMessage = 'Server or database error occurred.';
-                        if(error.message === 'no books') {
-                            errorMessage = 'Update incomplete: No book with this ISBN.'
-                        } else if (error.message === 'negative number') {
-                            errorMessage = 'Update incomplete: Rating amount cannot be a negative number.'
-                        }
+                return pool.query('ROLLBACK').then(() => {
+                    let errorMessage = 'Server or database error occurred.';
+                    if (error.message === 'no books') {
+                        errorMessage =
+                            'Update incomplete: No book with this ISBN.';
+                    } else if (error.message === 'negative number') {
+                        errorMessage =
+                            'Update incomplete: Rating amount cannot be a negative number.';
+                    }
 
-                        res.status(500).send({
-                            message: errorMessage,
-                        });
+                    res.status(500).send({
+                        message: errorMessage,
                     });
+                });
             });
     }
 );
 
-
 /**
- * @api {post} /books Request to add a new book
+ * @api {post} /books/addBook Request to add a new book
  *
- * @apiDescription This api allows an authenticated user with the correct permission to add a new book in the database,
- * with all the required information.
+ * @apiDescription This api allows an authenticated user with the correct permission to add a new book
+ * in the database, with all the required information.
  *
  * @apiName PostAddBook
- * @apiGroup books
+ * @apiGroup Books
  *
- * @apiBody {number} id The added book's id
- * @apiBody {number} isbn-13 An identifier of the book
- * @apiBody {string} authors The creator of the book can have more than one
- * @apiBody {number} publication year A number that shows when the book was published
- * @apiBody {string} original_title Name the book was first given
- * @apiBody {string} title Another name for the book
- * @apiBody {number} average rating The average amount of rate from 1-5
- * @apiBody {number} ratings count total amount of time the book was rated
- * @apiBody {number} rating_1 Number of 1-star rating on this book.
- * @apiBody {number} rating_2 Number of 2-star rating on this book.
- * @apiBody {number} rating_3 Number of 3-star rating on this book.
- * @apiBody {number} rating_4 Number of 4-star rating on this book.
- * @apiBody {number} rating_5 Number of 5-star rating on this book.
- * @apiBody {string} image_url The url of the image
- * @apiBody {string} small_image_url The url of the small image of the book
+ * @apiBody {Number} id The added book's id
+ * @apiBody {Number} isbn-13 An identifier of the book
+ * @apiBody {String} authors The creator of the book can have more than one
+ * @apiBody {Number} publication year A number that shows when the book was published
+ * @apiBody {String} original_title Name the book was first given
+ * @apiBody {String} title Another name for the book
+ * @apiBody {Number} average rating The average amount of rate from 1-5
+ * @apiBody {Number} ratings count total amount of time the book was rated
+ * @apiBody {Number} rating_1 Number of 1-star rating on this book.
+ * @apiBody {Number} rating_2 Number of 2-star rating on this book.
+ * @apiBody {Number} rating_3 Number of 3-star rating on this book.
+ * @apiBody {Number} rating_4 Number of 4-star rating on this book.
+ * @apiBody {Number} rating_5 Number of 5-star rating on this book.
+ * @apiBody {String} image_url The url of the image
+ * @apiBody {String} small_image_url The url of the small image of the book
  *
+ * @apiSuccess (201 Success) {String} Success new book was added to the database
  *
- *
- * @apiSuccess (201) {String} Success new book was added to the database
- *
- * @apiError (400: missing parameter) {String} message "Required information for new book is missing"
- * @apiError (403: unauthorized user) {String} message "You do not have access to add book"
- * @apiError (401: permission denied) {String} message "You do not have permission to add book"
+ * @apiError (400: Missing parameter) {String} message "Required information for new book is missing"
+ * @apiError (403: Unauthorized user) {String} message "You do not have access to add book"
+ * @apiError (401: Permission denied) {String} message "You do not have permission to add book"
  */
 bookRouter.post('/addBook', (req, res) => {
     const {
@@ -177,143 +179,194 @@ bookRouter.post('/addBook', (req, res) => {
         rating_4_star,
         rating_5_star,
         image_url,
-        image_small_url
+        image_small_url,
     } = req.body;
 
-    const requiredFields = ['id', 'isbn13', 'authors', 'publication_year', 'original_title', 'title', 'rating_avg', 'rating_count', 'rating_1_star', 'rating_2_star', 'rating_3_star', 'rating_4_star', 'rating_5_star', 'image_url', 'image_small_url'];
-    const missingFields = requiredFields.filter(field => !req.body[field]);
+    const requiredFields = [
+        'id',
+        'isbn13',
+        'authors',
+        'publication_year',
+        'original_title',
+        'title',
+        'rating_avg',
+        'rating_count',
+        'rating_1_star',
+        'rating_2_star',
+        'rating_3_star',
+        'rating_4_star',
+        'rating_5_star',
+        'image_url',
+        'image_small_url',
+    ];
+    const missingFields = requiredFields.filter((field) => !req.body[field]);
     if (missingFields.length > 0) {
-        return res.status(400).send("Required information for new book is missing ");
+        return res
+            .status(400)
+            .send('Required information for new book is missing ');
     }
 
     pool.query('BEGIN')
         .then(() => {
             return pool.query(
                 'INSERT INTO books (id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-                [id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url]
+                [
+                    id,
+                    isbn13,
+                    publication_year,
+                    original_title,
+                    title,
+                    rating_avg,
+                    rating_count,
+                    rating_1_star,
+                    rating_2_star,
+                    rating_3_star,
+                    rating_4_star,
+                    rating_5_star,
+                    image_url,
+                    image_small_url,
+                ]
             );
         })
-        .then(result => {
+        .then((result) => {
             const bookId = result.rows[0].id;
             const authorNames = authors.split(';');
-            const authorPromises = authorNames.map(authorName => {
-                return pool.query('INSERT INTO authors (name) VALUES ($1) RETURNING id', [authorName])
-                    .then(authorResult => {
+            const authorPromises = authorNames.map((authorName) => {
+                return pool
+                    .query(
+                        'INSERT INTO authors (name) VALUES ($1) RETURNING id',
+                        [authorName]
+                    )
+                    .then((authorResult) => {
                         const authorId = authorResult.rows[0].id;
-                        return pool.query('INSERT INTO book_author (book, author) VALUES ($1, $2)', [bookId, authorId]);
+                        return pool.query(
+                            'INSERT INTO book_author (book, author) VALUES ($1, $2)',
+                            [bookId, authorId]
+                        );
                     });
             });
             return Promise.all(authorPromises);
         })
         .then(() => pool.query('COMMIT'))
         .then(() => {
-            res.status(201).send("Success new book was added to the database");
+            res.status(201).send('Success new book was added to the database');
         })
-        .catch(error => {
-            return pool.query('ROLLBACK')
-                .then(() => {
-                    console.error(`Failed to add book due to ${error}`);
-                    res.status(500).send("An error occurred while adding the book");
-                });
+        .catch((error) => {
+            return pool.query('ROLLBACK').then(() => {
+                console.error(`Failed to add book due to ${error}`);
+                res.status(500).send('An error occurred while adding the book');
+            });
         });
 });
 
 /**
- * @api {delete} /books Request to delete a book
+ * @api {delete} /books/deleteBook/:isbn Request to delete a book
  *
  * @apiDescription Deletes a single book from the database by ID or the ISBN.
  *
  * @apiName DeleteBook
- * @apiGroup books
+ * @apiGroup Books
  *
  * @apiParam {Number} id The primary key ID of the book to delete
  * @apiParam {Number} isbn The isbn of the book to delete
  *
- * @apiSuccess (200) {String} Success book was deleted!
+ * @apiSuccess (200 Success) {String} Success book was deleted!
  *
- * @apiError (400) {String} message "No books found matching the criteria"
- * @apiError (401) {String} message "No permission to delete books"
- * @apiError (403) {String} message "Unauthorized user"
+ * @apiError (400: No book match) {String} message "No books found matching the criteria"
+ * @apiError (401: Permission denied) {String} message "No permission to delete books"
+ * @apiError (403: Unauthorized user) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFunction) => {
-    const isbn = req.params.isbn;
+bookRouter.delete(
+    '/deleteBook/:isbn',
+    (req: Request, res: Response, next: NextFunction) => {
+        const isbn = req.params.isbn;
 
-    if (!/^\d{13}$/.test(isbn)) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
-    pool.query('DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)', [isbn])
-        .then(() => {
-            return pool.query('DELETE FROM books WHERE isbn13 = $1', [isbn]);
-        })
-        .then(() => {
-            res.status(200).send({
-                message: 'Success book was deleted!.'
+        if (!/^\d{13}$/.test(isbn)) {
+            return res.status(400).send({
+                message: 'No books found matching the criteria',
             });
-        })
-        .catch((error) => {
-            console.error(`Server failed to delete book(s) due to ${error}`);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
-
-
+        }
+        pool.query(
+            'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)',
+            [isbn]
+        )
+            .then(() => {
+                return pool.query('DELETE FROM books WHERE isbn13 = $1', [
+                    isbn,
+                ]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Success book was deleted!.',
+                });
+            })
+            .catch((error) => {
+                console.error(
+                    `Server failed to delete book(s) due to ${error}`
+                );
+                res.status(500).send('Server error, so sorry!');
+            });
+    }
+);
 
 /**
- * @api {delete} /books Request to delete a range of books
+ * @api {delete} /books/deleteRangeBooks/:min_id/:max_id Request to delete a range of books
  *
  * @apiDescription This deletes a range of books within a minimum book ID and maximum book ID
  * inclusively.
  *
  * @apiName DeleteRangeBooks
- * @apiGroup books
+ * @apiGroup Books
  *
  * @apiParam {Number} min_id The minimum ID of the range
  * @apiParam {Number} max_id the maximum ID of the range
  *
- * @apiSuccess (200) {String} Success: Range of books deleted!
+ * @apiSuccess (200 Success) {String} Success Range of books deleted!
  *
- * @apiError (400) {String} message "No books found matching the criteria"
- * @apiError (401) {String} message "No permission to delete books"
- * @apiError (403) {String} message "Unauthorized user"
+ * @apiError (400: No book match) {String} message "No books found matching the criteria"
+ * @apiError (401: Permission denied) {String} message "No permission to delete books"
+ * @apiError (403: Unauthorized user) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
-    const { min_id, max_id } = req.params;
+bookRouter.delete(
+    '/deleteRangeBooks/:min_id/:max_id',
+    (req: Request, res: Response, next: NextFunction) => {
+        const { min_id, max_id } = req.params;
 
-    if (isNaN(Number(min_id)) || isNaN(Number(max_id))) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
-
-    // Convert min_id and max_id to integers
-    const minId = parseInt(min_id);
-    const maxId = parseInt(max_id);
-
-    // Validate that min_id is less than or equal to max_id
-    if (minId > maxId) {
-        return res.status(400).send({
-            message: 'No books found matching the criteria'
-        });
-    }
-
-    const query = 'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
-    pool.query(query, [min_id, max_id])
-        .then(() => {
-            const deleteBooksQuery = 'DELETE FROM books WHERE id >= $1 AND id <= $2;';
-            return pool.query(deleteBooksQuery, [min_id, max_id]);
-        })
-        .then(() => {
-            res.status(200).send({
-                message: 'Range of books deleted!'
+        if (isNaN(Number(min_id)) || isNaN(Number(max_id))) {
+            return res.status(400).send({
+                message: 'No books found matching the criteria',
             });
-        })
-        .catch((error) => {
-            console.error(error);
-            res.status(500).send('Server error, so sorry!');
-        });
-});
+        }
 
+        // Convert min_id and max_id to integers
+        const minId = parseInt(min_id);
+        const maxId = parseInt(max_id);
+
+        // Validate that min_id is less than or equal to max_id
+        if (minId > maxId) {
+            return res.status(400).send({
+                message: 'No books found matching the criteria',
+            });
+        }
+
+        const query =
+            'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE id >= $1 AND id <= $2);';
+        pool.query(query, [min_id, max_id])
+            .then(() => {
+                const deleteBooksQuery =
+                    'DELETE FROM books WHERE id >= $1 AND id <= $2;';
+                return pool.query(deleteBooksQuery, [min_id, max_id]);
+            })
+            .then(() => {
+                res.status(200).send({
+                    message: 'Range of books deleted!',
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                res.status(500).send('Server error, so sorry!');
+            });
+    }
+);
 
 export { bookRouter };

@@ -30,14 +30,20 @@ const key = {
 
 /**
  * @api {post} /login Request to sign a user in the system
+ *
  * @apiName GetAuth
  * @apiGroup Auth
  *
- * @apiHeader {string} authorization "Basic username:password" where username:password is a Base64 encoded string.
+ * @apiHeader {String} authorization "Basic username:password" where username:password is a Base64 encoded string.
  *
  * @apiSuccess {String} accessToken JSON Web Token
  * @apiSuccess {number} id unique user id
-
+ * @apiSuccessExample token-id:
+ *      {
+ *          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
+ *          id: 123456789
+ *      }
+ *
  * @apiError (400: Missing Authorization Header) {String} message "Missing Authorization Header"
  * @apiError (400: Malformed Authorization Header) {String} message "Malformed Authorization Header"
  * @apiError (404: User Not Found) {String} message "User not found"
@@ -47,9 +53,7 @@ const key = {
 signinRouter.post(
     '/login',
     (request: AuthRequest, response: Response, next: NextFunction) => {
-        if (
-            isStringProvided(request.headers.authorization)
-        ) {
+        if (isStringProvided(request.headers.authorization)) {
             next();
         } else {
             response.status(400).send({
@@ -73,7 +77,7 @@ signinRouter.post(
                               account_Credential.account_id = account.account_id
                           WHERE account.email = $1`;
         console.log(request.headers.authorization);
-        const auth = atob((request.headers.authorization).replace('Basic ', ''));
+        const auth = atob(request.headers.authorization.replace('Basic ', ''));
         console.log(auth);
         const [email, pass] = auth.split(':');
         console.log(`email: ${email}, PW: ${pass}`);
@@ -88,9 +92,7 @@ signinRouter.post(
                     return;
                 } else if (result.rowCount > 1) {
                     //log the error
-                    console.error(
-                        'Multiple users exist with same email!',
-                    );
+                    console.error('Multiple users exist with same email!');
                     response.status(500).send({
                         message: 'server error - contact support',
                     });
@@ -104,10 +106,7 @@ signinRouter.post(
                 const storedSaltedHash = result.rows[0].salted_hash;
 
                 //Generate a hash based on the stored salt and the provided password
-                const providedSaltedHash = generateHash(
-                    pass,
-                    salt,
-                );
+                const providedSaltedHash = generateHash(pass, salt);
 
                 //Did our salted hash match their salted hash?
                 if (storedSaltedHash === providedSaltedHash) {
@@ -120,7 +119,10 @@ signinRouter.post(
                     });
                 } else {
                     //credentials dod not match
-                    response.setHeader('WWW-Authenticate', 'Basic realm=User Login');
+                    response.setHeader(
+                        'WWW-Authenticate',
+                        'Basic realm=User Login'
+                    );
                     response.status(401).send({
                         message: 'Incorrect Username/Password',
                     });
@@ -134,7 +136,7 @@ signinRouter.post(
                     message: 'server error - contact support',
                 });
             });
-    },
+    }
 );
 
 export { signinRouter };

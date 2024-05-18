@@ -17,6 +17,7 @@ const validTitle = parameterChecks.validTitle;
 const validAuthor = parameterChecks.validAuthor;
 const validMinMax = parameterChecks.validMinMax;
 
+// Part of the query that retrieves books with their authors
 const getBooksAndAuthorsQuery = `
     SELECT *
     FROM books
@@ -67,6 +68,7 @@ const queryAndResponse = (
 
 /**
  * Takes in a QueryResult containing complete book records and formats as IBook array.
+ *
  * @param toFormat
  */
 function resultToIBook(toFormat: QueryResult) {
@@ -100,6 +102,7 @@ function resultToIBook(toFormat: QueryResult) {
 
 /**
  * Confirms a query is formatted correctly to perform a keyword search and does not contain additional symbols.
+ *
  * @param req HTTP Request
  * @param res HTTP Response
  * @param next Next Middleware Function
@@ -131,6 +134,13 @@ const checkKwQueryFormat = (
     }
 };
 
+/**
+ * Check whether the given request contains at least on query parameter.
+ *
+ * @param req HTTP Request
+ * @param res HTTP Response
+ * @param next Next Middleware Function
+ */
 const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
     if (Object.keys(req.query).length > 0) {
         console.log(
@@ -145,6 +155,13 @@ const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+/**
+ * Perform keyword search on the given keywork q in the request and send the resulting books in response.
+ *
+ * @param req HTTP Request
+ * @param res HTTP Response
+ * @param next Next Middleware Function
+ */
 const performKeywordSearch = async (
     req: Request,
     res: Response,
@@ -169,10 +186,38 @@ const performKeywordSearch = async (
 
 //endregion middleware
 
+/**
+ * @apiDefine IBookFormat
+ * @apiSuccessExample
+ *      {
+ *          books: [
+ *              isbn13: 9780439023480,
+ *              authors: "Suzanne Collins",
+ *              publication: 2008,
+ *              original_title: "The Hunger Games",
+ *              title: "The Hunger Games (The Hunger Games, #1)",
+ *              ratings: {
+ *                  average: 4.34,
+ *                  count: 4780653,
+ *                  rating_1: 66715,
+ *                  rating_2: 127936,
+ *                  rating_3: 560092,
+ *                  rating_4: 1481305,
+ *                  rating_5: 2706317,
+ *              },
+ *              icons: {
+ *                  large: "https://images.gr-assets.com/books/1447303603m/2767052.jpg",
+ *                  small: "https://images.gr-assets.com/books/1447303603s/2767052.jpg",
+ *              },
+ *          ]
+ *      }
+ */
+
 //region getAll
 
 /**
- * @api {get} /books/all
+ * @api {get} /books/all?orderby=:orderby&sort:=sort&offset:=offset&page:=page
+ * Get all books sorted by a certain attribute of the book.
  *
  * @apiDescription Request to retrieve all information about all books in a certain page sorted by specified
  * attribute. The number of books display per page is specified by offset. The offset and page must be numeric.
@@ -193,12 +238,13 @@ const performKeywordSearch = async (
  * @apiQuery {Number} offset=15 The number of books display per page.
  * @apiQuery {Number} page=1 The page number that starts from one.
  *
- * @apiSuccess (200 Success) {Array<IBook>} books A list of books in the given page.
+ * @apiSuccess (200: Success) {IBook[]} books A list of books in the given page.
+ * @apiUse IBookFormat
  *
- * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
- * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
- * @apiError (400 No book found) {String} message "Unexpected error - cannot retrieve books."
- * @apiError (500 Internal server error) {String} message "Server error - Contact Support."
+ * @apiError (400: Invalid page) {String} message "The page number in the request is not numeric."
+ * @apiError (400: Invalid offset) {String} message "The offset in the request is not numeric."
+ * @apiError (400: No book found) {String} message "Unexpected error - cannot retrieve books."
+ * @apiError (500: Server error) {String} message "Server error - Contact Support."
  */
 bookRouter.get(
     '/all',
@@ -225,7 +271,8 @@ bookRouter.get(
 //region searches
 
 /**
- * @api {get} /books/search
+ * @api {get} /books/search?offset:=offset&page:=page
+ * Get specific book(s) based on the search query passed to the method.
  *
  * @apiDescription Request to retrieve a list of books that match all the query parameters entered.
  * If parameter q is entered, it means it will search by keyword and all other parameters will not
@@ -237,8 +284,6 @@ bookRouter.get(
  * @apiName SearchByParameter
  * @apiGroup Books
  *
- * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
- * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
  * @apiQuery {String} [title] The title of the book to search for.
  * @apiQuery {Number} [isbn] The ISBN of the book to search for.
  * @apiQuery {String} [author] The author's first and/or last name.
@@ -249,16 +294,19 @@ bookRouter.get(
  * @apiQuery {Number} offset=15 The number of books display per page.
  * @apiQuery {Number} page=1 The page number that starts from one.
  *
- * @apiSuccess (200 Success) {Array<IBook>} books A list of books match the parameters entered.
+ * @apiSuccess (200: Success) {IBook[]} books A list of books match the parameters entered.
+ * @apiUse IBookFormat
  *
- * @apiError (400 No parameter) {String} message "None of the required parameter is entered."
- * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not numeric."
- * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
- * @apiError (400 Invalid Min/Max) {String} message "Min is greater than max."
- * @apiError (400 Blank parameter) {String} message "Title cannot be blank."
- * @apiError (400 Blank parameter) {String} message "ISBN cannot be blank."
- * @apiError (400 Blank parameter) {String} message "Author cannot be blank."
- * @apiError (500 Internal server error) {String} message "Server error - Contact Support."
+ * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
+ * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
+ * @apiError (400: No parameter) {String} message "None of the required parameter is entered."
+ * @apiError (400: Invalid ISBN) {String} message "The ISBN in the request is not numeric."
+ * @apiError (400: Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
+ * @apiError (400: Invalid Min/Max) {String} message "Min is greater than max."
+ * @apiError (400: Blank parameter) {String} message "Title cannot be blank."
+ * @apiError (400: Blank parameter) {String} message "ISBN cannot be blank."
+ * @apiError (400: Blank parameter) {String} message "Author cannot be blank."
+ * @apiError (500: Server error) {String} message "Server error - Contact Support."
  */
 bookRouter.get(
     '/search',
@@ -325,13 +373,13 @@ bookRouter.get(
 /**
  * @api {put} /books
  *
- * @apiDescription Allows an authenticated user to update a book's information.
- *   Retrieves the book to be updated with the ISBN.
+ * @apiDescription Allows an authenticated user to update a book's information. Retrieves
+ * the book to be updated with the ISBN.
  *
  * @apiName UpdateBook
- * @apiGroup books
+ * @apiGroup Books
  *
- * @apiParam {Int} isbn-13 The ISBN of the book to be updated.
+ * @apiParam {Number} isbn-13 The ISBN of the book to be updated.
  * @apiParam {String} attribute The attribute of the book that will be updated.
  * @apiParam {String} newInfo The information to update the book with.
  *
@@ -339,7 +387,7 @@ bookRouter.get(
  *
  * @apiError (400: Bad request) {String} message Missing parameter(s).
  * @apiError (401: Unauthorized) {String} message User does not have permission to update books.
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
+ * @apiError (500: Server error) {String} message Server or database error occurred.
  */
 // method goes here
 
