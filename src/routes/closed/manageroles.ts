@@ -29,6 +29,59 @@ const roleCheck = (permission: string) => {
 
 const checkManagePerm = roleCheck('manage_users');
 
+// Middleware to check if the ChangeUserRole input is valid.
+const checkCURparams = (request: Request, response: Response, next: NextFunction) => {
+    const userID = parseInt(request.body.userID);
+    const newRoleID = parseInt(request.body.newRoleID);
+
+    if ((!isNaN(userID) && userID >= 1) && (!isNaN(newRoleID) && newRoleID >= 1)) {
+        next();
+    } else {
+        response.status(400).json({ error: 'Invalid or missing ID.' });
+    }
+};
+
+// Middleware for validating AddNewRole input is valid.
+const checkANRparams = (request: Request, response: Response, next: NextFunction) => {
+    const roleName = request.body.roleName;
+    const admin = request.body.admin;
+    const updateAdd = request.body.updateAdd;
+    const canDelete = request.body.canDelete;
+    const manageUsers = request.body.manageUsers;
+
+    if (typeof roleName !== 'string' || roleName.trim() === '') {
+        return response.status(400).json({
+            message: 'roleName value must be a non-empty string.'
+        });
+    }
+
+    if (typeof admin !== 'boolean') {
+        return response.status(400).json({
+            message: 'admin value must be a boolean.'
+        });
+    }
+
+    if (typeof updateAdd !== 'boolean') {
+        return response.status(400).json({
+            message: 'updateAdd must be a boolean.'
+        });
+    }
+
+    if (typeof canDelete !== 'boolean') {
+        return response.status(400).json({
+            message: 'canDelete must be a boolean.'
+        });
+    }
+
+    if (typeof manageUsers !== 'boolean') {
+        return response.status(400).json({
+            message: 'manageUsers must be a boolean.'
+        })
+    }
+
+    next();
+};
+
 /**
  * @api {post} /users/changeUserRole
  *
@@ -42,10 +95,11 @@ const checkManagePerm = roleCheck('manage_users');
  *
  * @apiSuccess (200: Success) {String} message 'User role changed successfully.'
  *
+ * @apiError (400: Bad request) {String} message 'Invalid or missing ID.'
  * @apiError (401: Invalid token) {String} message 'User not authorized to perform this action.'
  * @apiError (500: Internal server error) {String} message 'Server error during database query.'
  */
-mrRouter.put('/updateRole', checkManagePerm, (req, res) => {
+mrRouter.put('/updateRole', checkManagePerm, checkCURparams, (req, res) => {
     const userID = req.body.userID;
     const newRoleID = req.body.newRoleID;
     const query = `UPDATE account
@@ -83,10 +137,15 @@ mrRouter.put('/updateRole', checkManagePerm, (req, res) => {
  * @apiSuccess (200: Success) {String} message 'Added new role successfully.'
  * @apiSuccess (200: Success) {IRole} role the roles object including id, name, admin, update_add, delete, manage_users
  *
+ * @apiError (400: Bad request) {String} message 'roleName value must be a non-empty string.'
+ * @apiError (400: Bad request) {String} message 'admin value must be a boolean.'
+ * @apiError (400: Bad request) {String} message 'updateAdd value must be a boolean.'
+ * @apiError (400: Bad request) {String} message 'canDelete value must be a boolean.'
+ * @apiError (400: Bad request) {String} message 'manageUsers value must be a boolean.'
  * @apiError (401: Invalid token) {String} message 'User not authorized to perform this action.'
  * @apiError (500: Internal server error) {String} message 'Server error during database query.'
  */
-mrRouter.post('/newRole', roleCheck('admin'), (req, res) => {
+mrRouter.post('/newRole', roleCheck('admin'), checkANRparams, (req, res) => {
     const roleName = req.body.roleName;
     const admin = req.body.admin;
     const updateAdd = req.body.updateAdd;
