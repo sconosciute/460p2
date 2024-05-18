@@ -193,7 +193,7 @@ const performKeywordSearch = async (
  * @apiQuery {Number} offset=15 The number of books display per page.
  * @apiQuery {Number} page=1 The page number that starts from one.
  *
- * @apiSuccess (200 Success) {Array<IBook>} books A list of books in the given page.
+ * @apiSuccess (200 Success) {Array} books A list of books in the given page.
  *
  * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
  * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
@@ -237,21 +237,23 @@ bookRouter.get(
  * @apiName SearchByParameter
  * @apiGroup Books
  *
+ * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
+ * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
  * @apiQuery {String} [title] The title of the book to search for.
  * @apiQuery {Number} [isbn] The ISBN of the book to search for.
  * @apiQuery {String} [author] The author's first and/or last name.
- * @apiQuery {Number{1-5}} [min] The minimum rating. Will be clamped between 1-5, malformed input will be treated as 1.
- * @apiQuery {Number{1-5}} [max] The maximum rating. Will be clamped between 1-5, Malformed input will be treated as 5.
+ * @apiQuery {Number{1-5}} [min] The minimum rating. Will be clamped between 1-5, malformed input
+ * will be treated as 1.
+ * @apiQuery {Number{1-5}} [max] The maximum rating. Will be clamped between 1-5, Malformed input
+ * will be treated as 5.
  * @apiQuery {Number} offset=15 The number of books display per page.
  * @apiQuery {Number} page=1 The page number that starts from one.
  *
- * @apiSuccess (200 Success) {Array<IBook>} books A list of books match the parameters entered.
+ * @apiSuccess (200 Success) {Array} books A list of books match the parameters entered.
  *
  * @apiError (400 No parameter) {String} message "None of the required parameter is entered."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not numeric."
  * @apiError (400 Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
- * @apiError (400 Invalid Min/Max) {String} message "Min is not numeric or is greater than 5."
- * @apiError (400 Invalid Min/Max) {String} message "Max is not numeric or is less than 1."
  * @apiError (400 Invalid Min/Max) {String} message "Min is greater than max."
  * @apiError (400 Blank parameter) {String} message "Title cannot be blank."
  * @apiError (400 Blank parameter) {String} message "ISBN cannot be blank."
@@ -319,27 +321,6 @@ bookRouter.get(
         }
     }
 );
-
-/**
- * @api {put} /books
- *
- * @apiDescription Allows an authenticated user to update a book's information.
- *   Retrieves the book to be updated with the ISBN.
- *
- * @apiName UpdateBook
- * @apiGroup books
- *
- * @apiParam {Int} isbn-13 The ISBN of the book to be updated.
- * @apiParam {String} attribute The attribute of the book that will be updated.
- * @apiParam {String} newInfo The information to update the book with.
- *
- * @apiSuccess (200: Success) {String} Book updated successfully.
- *
- * @apiError (400: Bad request) {String} message Missing parameter(s).
- * @apiError (401: Unauthorized) {String} message User does not have permission to update books.
- * @apiError (500: Internal server error) {String} message Server or database error occurred.
- */
-// method goes here
 
 //endregion searches
 

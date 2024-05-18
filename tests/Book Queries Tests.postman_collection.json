@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "c1ceb7fa-468b-4d54-a61e-20ffb7bf4f5b",
+		"_postman_id": "80aa0cec-8abf-4605-8709-1f4163fdb075",
 		"name": "Book Queries Tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "34052929"
+		"_exporter_id": "33853299"
 	},
 	"item": [
 		{
@@ -1469,7 +1469,14 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									""
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1&offset=10000\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"all_book_count\", res.json().books.length);\r",
+									"    }\r",
+									"})"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -1486,7 +1493,7 @@
 									"})\r",
 									"\r",
 									"pm.test(\"Rating 1 - 5 includes all books\", () => {\r",
-									"    pm.expect(response.books).to.have.lengthOf(15);\r",
+									"    pm.expect(response.books.length).to.be.eql(pm.collectionVariables.get(\"all_book_count\"))\r",
 									"})"
 								],
 								"type": "text/javascript",
@@ -1718,6 +1725,147 @@
 									"key": "q",
 									"value": "harry()potter"
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Closed Routes",
+			"item": [
+				{
+					"name": "Register new user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstname\": \"{{$randomFirstName}}\",\r\n    \"lastname\": \"{{$randomLastName}}\",\r\n    \"username\": \"{{$randomUserName}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"phone\": \"{{$randomPhoneNumber}}\",\r\n    \"role\": 1,\r\n    \"password\": \"password!\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=9780307265430",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780307265430"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get roles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/roles",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change user role",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 16,\r\n    \"newRoleID\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/updateRole",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"updateRole"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"roleName\": \"{{$randomWord}}\",\r\n    \"admin\": true,\r\n    \"updateAdd\": true,\r\n    \"canDelete\": true,\r\n    \"manageUsers\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/newRole",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"newRole"
 							]
 						}
 					},
