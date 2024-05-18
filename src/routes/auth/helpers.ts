@@ -11,6 +11,7 @@ export const authHelpRouter = express.Router();
  * @apiName GetRolesList
  * @apiGroup Auth
  *
+<<<<<<< HEAD
  * @apiSuccess (201: Success) {any[]} roles An array of valid roles currently stored in the database.
  * @apiSuccessExample roles-format:
  *      {
@@ -19,6 +20,13 @@ export const authHelpRouter = express.Router();
  *              role_name: "User"
  *          ]
  *      }
+=======
+ * @apiBody {Array} roles An array of valid roles currently stored in the database.
+ *
+ * @apiSuccess (201) {Array} Roles available in database.
+ *
+ * @apiError (500: Server Error) If roles could not be retrieved from the database.
+>>>>>>> 0830e36254b0c54e8332cff95252e4bc9a7828d0
  *
  * @apiError (500: Server error) If roles could not be retrieved from the database.
  */

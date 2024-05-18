@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "c1ceb7fa-468b-4d54-a61e-20ffb7bf4f5b",
+		"_postman_id": "affddd05-3727-499a-8f4c-9eabd0cd9234",
 		"name": "Book Queries Tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "34052929"
+		"_exporter_id": "34249614"
 	},
 	"item": [
 		{
@@ -1188,7 +1188,8 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"pm.test(\"200 Success\", () => {\r",
+									"// Non-numeric min is invalid\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
 									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
@@ -1228,7 +1229,8 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"pm.test(\"200 Success\", () => {\r",
+									"// Min is greater and upper bound\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
 									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
@@ -1321,7 +1323,8 @@
 								"exec": [
 									"const response = pm.response.json();\r",
 									"\r",
-									"pm.test(\"200 Success\", () => {\r",
+									"// Non-numeric will convert to default.\r",
+									"pm.test(\"200 Invalid Min/Max\", () => {\r",
 									"    pm.response.to.have.status(200);\r",
 									"})"
 								],
@@ -1466,7 +1469,14 @@
 							"listen": "prerequest",
 							"script": {
 								"exec": [
-									""
+									"pm.sendRequest({\r",
+									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1&offset=10000\",\r",
+									"    method: \"GET\"\r",
+									"}, function(err, res) {\r",
+									"    if (err == null) {\r",
+									"        pm.collectionVariables.set(\"all_book_count\", res.json().books.length);\r",
+									"    }\r",
+									"})"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -1483,7 +1493,7 @@
 									"})\r",
 									"\r",
 									"pm.test(\"Rating 1 - 5 includes all books\", () => {\r",
-									"    pm.expect(response.books).to.have.lengthOf(15);\r",
+									"    pm.expect(response.books.length).to.be.eql(pm.collectionVariables.get(\"all_book_count\"))\r",
 									"})"
 								],
 								"type": "text/javascript",
@@ -1606,62 +1616,6 @@
 					"response": []
 				},
 				{
-					"name": "multiple valid values",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"pm.test(\"200 Success\", () => {\r",
-									"    pm.response.to.have.status(200);\r",
-									"})\r",
-									"\r",
-									"pm.test(\"At least one match\", () => {\r",
-									"    pm.expect(response).to.haveOwnProperty(\"books\");\r",
-									"    pm.expect(response.books.length > 0);\r",
-									"})\r",
-									"\r",
-									"pm.test(\"Books have rating greater or equal to 2 and publication year 2003\", () => {\r",
-									"    for (let i = 0; i < response.books.length - 1; i++) {\r",
-									"        pm.expect(Number(response.books[i].ratings.average) >= 2);\r",
-									"        pm.expect(Number(response.books[i].isbn13) == 9780099465640);\r",
-									"    }\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?isbn=9780099465640&min=4",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "isbn",
-									"value": "9780099465640"
-								},
-								{
-									"key": "min",
-									"value": "4"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "keywordSearch",
 					"event": [
 						{
@@ -1771,6 +1725,1131 @@
 									"key": "q",
 									"value": "harry()potter"
 								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Closed Routes",
+			"item": [
+				{
+					"name": "Register new user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstname\": \"{{$randomFirstName}}\",\r\n    \"lastname\": \"{{$randomLastName}}\",\r\n    \"username\": \"{{$randomUserName}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"phone\": \"{{$randomPhoneNumber}}\",\r\n    \"role\": 1,\r\n    \"password\": \"password!\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - valid isbn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Success book was deleted!.\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=9780307265430",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "9780307265430"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - invalid isbn chararacter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Can not parse ISBN.\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=978030a",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "978030a"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - invalid ISBN length",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 Invalid ISBN\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"ISBN must be 13 characters.\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=978030",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "978030"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Book - No permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"pm.test(\"Check for missing auth token\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
+									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//remove the token"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.remove('authorization');"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteIsbn?isbn=1234567891234",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteIsbn"
+							],
+							"query": [
+								{
+									"key": "isbn",
+									"value": "1234567891234"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - Valid range IDs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"200 Success deleting books\", () => {\r",
+									"    pm.response.to.have.status(200);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Range of books deleted!\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=18&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "18"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - invalid range IDs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 error deleting books\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Please provide valid min_id and max_id parameters\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=a&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "a"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - invalid missing range",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 error deleting books\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Min range must be less than max range\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=50&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - invalid mid range ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"const response = pm.response.json();\r",
+									"\r",
+									"// Non-numeric page is invalid\r",
+									"pm.test(\"400 error deleting books\", () => {\r",
+									"    pm.response.to.have.status(400);\r",
+									"})\r",
+									"\r",
+									"pm.test(\"Response message is correct\", function () {\r",
+									"    pm.response.to.have.jsonBody(\"message\", \"Min range must be less than max range\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=50&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Range Book - No permission",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for missing auth token\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
+									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//remove the token"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.remove('Authorization');"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=19&max_id=20",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"deleteRangeBooks"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "19"
+								},
+								{
+									"key": "max_id",
+									"value": "20"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Duplicate ID book",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if ID already exists\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"ID already exists\");\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 295210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"John Smith\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book -Success",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 201 success if Success, new book was added to the database\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"Success, new book was added to the database\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Missing info",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if required information is missing\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"Required information for new book is missing\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Invalid ISBN",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if ISBN is invalid\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"ISBN must be exactly 13 digits long and consist only of numbers\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812a\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - Invalid ratings",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"\r",
+									"pm.test(\"Check for 400 error if rating fields are invalid\", function () {\r",
+									"    if (pm.response.code === 400) {\r",
+									"        pm.expect(pm.response.text()).to.include(\"Rating fields must be numbers or decimals\");\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//will need to change ID if testing to avoid dup IDS"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812123\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": \"a\",\r\n    \"rating_4_star\": \"b\",\r\n    \"rating_5_star\": \"c\",\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Post add Book - No permission for adding",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Check for missing auth token\", function () {\r",
+									"    if (pm.response.code === 401) {\r",
+									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
+									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"//remove auth to see"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"pm.request.headers.remove('Authorization');"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812123\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 1,\r\n    \"rating_4_star\": 2,\r\n    \"rating_5_star\": 3,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/books/addBook",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"books",
+								"addBook"
+							],
+							"query": [
+								{
+									"key": "min_id",
+									"value": "50",
+									"disabled": true
+								},
+								{
+									"key": "max_id",
+									"value": "20",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get roles",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/roles",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"roles"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Change user role",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userID\": 16,\r\n    \"newRoleID\": 3\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/updateRole",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"updateRole"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "New Role",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"roleName\": \"{{$randomWord}}\",\r\n    \"admin\": true,\r\n    \"updateAdd\": true,\r\n    \"canDelete\": true,\r\n    \"manageUsers\": true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/users/newRole",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"users",
+								"newRole"
 							]
 						}
 					},

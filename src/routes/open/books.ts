@@ -370,27 +370,6 @@ bookRouter.get(
     }
 );
 
-/**
- * @api {put} /books
- *
- * @apiDescription Allows an authenticated user to update a book's information. Retrieves
- * the book to be updated with the ISBN.
- *
- * @apiName UpdateBook
- * @apiGroup Books
- *
- * @apiParam {Number} isbn-13 The ISBN of the book to be updated.
- * @apiParam {String} attribute The attribute of the book that will be updated.
- * @apiParam {String} newInfo The information to update the book with.
- *
- * @apiSuccess (200: Success) {String} Book updated successfully.
- *
- * @apiError (400: Bad request) {String} message Missing parameter(s).
- * @apiError (401: Unauthorized) {String} message User does not have permission to update books.
- * @apiError (500: Server error) {String} message Server or database error occurred.
- */
-// method goes here
-
 //endregion searches
 
 export { bookRouter };
