@@ -262,7 +262,7 @@ bookRouter.post('/addBook',checkUpdatePerm, async (req, res) => {
 /**
  * @api {delete} /books Request to delete a book
  *
- * @apiDescription Deletes a single book from the database by ID or the ISBN.
+ * @apiDescription Deletes a single book from the database the ISBN.
  *
  * @apiName DeleteBook
  * @apiGroup books
