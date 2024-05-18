@@ -12,7 +12,6 @@ import {
     validationFunctions,
     credentialingFunctions,
 } from '../../core/utilities';
-import { QueryResult } from 'pg';
 import { issueJwt } from './index';
 
 const isStringProvided = validationFunctions.isStringProvided;
@@ -219,8 +218,8 @@ const mwRegisterUser = async (
  * @apiBody {String} role a role for this user [1-5]
  * @apiBody {String} phone a phone number for this user
  *
- * @apiSuccess (201 Success) {string} accessToken a newly created JWT
- * @apiSuccess (201 Success) {number} id unique user id
+ * @apiSuccess (201: Success) {string} accessToken a newly created JWT
+ * @apiSuccess (201: Success) {number} id unique user id
  * @apiSuccessExample token-id:
  *      {
  *          accessToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c",
@@ -245,19 +244,5 @@ registerRouter.post(
     mwCheckRole,
     mwRegisterUser
 );
-
-// registerRouter.get('/hash_demo', (request, response) => {
-//     const password = 'password12345';
-
-//     const salt = generateSalt(32);
-//     const saltedHash = generateHash(password, salt);
-//     const unsaltedHash = generateHash(password, '');
-
-//     response.status(200).send({
-//         salt: salt,
-//         salted_hash: saltedHash,
-//         unsalted_hash: unsaltedHash,
-//     });
-// });
 
 export { registerRouter };

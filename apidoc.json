@@ -6,6 +6,8 @@
     "url": "localhost:4000",
     "order": [
         "GetRolesList",
+        "ChangeUserRole",
+        "AddNewRole",
         "GetAuth",
         "PostAuth",
         "UpdateBookRating",
@@ -13,7 +15,6 @@
         "DeleteBook",
         "DeleteRangeBooks",
         "GetAllBooks",
-        "SearchByParameter",
-        "UpdateBook"
+        "SearchByParameter"
     ]
 }

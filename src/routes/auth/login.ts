@@ -34,11 +34,7 @@ const key = {
  * @apiName GetAuth
  * @apiGroup Auth
  *
-<<<<<<< HEAD
- * @apiHeader {String} authorization "Basic username:password" where username:password is a Base64 encoded string.
-=======
  * @apiHeader {string} authorization "Basic email:password" where email:password is a Base64 encoded string.
->>>>>>> 0830e36254b0c54e8332cff95252e4bc9a7828d0
  *
  * @apiSuccess {String} accessToken JSON Web Token
  * @apiSuccess {number} id unique user id

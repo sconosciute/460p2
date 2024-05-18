@@ -1,7 +1,7 @@
 // Express is the framework we're going to use to handle requests
 import express, { NextFunction, Request, Response, Router } from 'express';
 // Access the connection to Postgres Database
-import { pool, validationFunctions } from '../../core/utilities';
+import { pool } from '../../core/utilities';
 // import { roleCheck } from './index';
 import { IJwtRequest } from '../../core/models';
 
@@ -10,7 +10,8 @@ const mrRouter: Router = express.Router();
 // Middleware to check if the user is an admin.
 const roleCheck = (permission: string) => {
     return async (req: IJwtRequest, res: Response, next: NextFunction) => {
-        const query = 'SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_id WHERE account_id = $1';
+        const query =
+            'SELECT roles.admin, roles.update_add, roles.delete, roles.manage_users FROM roles INNER JOIN account a on roles.id = a.role_id WHERE account_id = $1';
         const values = [req.claims.sub];
         const perm = permission.toLowerCase();
 
@@ -29,12 +30,12 @@ const roleCheck = (permission: string) => {
 const checkManagePerm = roleCheck('manage_users');
 
 /**
- * @api {post} /changeUserRole
+ * @api {post} /users/changeUserRole
  *
  * @apiDescription Allows an admin user to update a user's role in the database.
  *
  * @apiName ChangeUserRole
- * @apiGroup manageroles
+ * @apiGroup ManageRoles
  *
  * @apiBody {Integer} userID The ID of the user that will have their role changed.
  * @apiBody {Integer} newRoleID The ID of the user's new role.
@@ -53,25 +54,25 @@ mrRouter.put('/updateRole', checkManagePerm, (req, res) => {
 
     pool.query(query, [newRoleID, userID])
         .then(() => {
-            res.status(200).send(
-                { message: 'User role changed successfully.' },
-            );
+            res.status(200).send({
+                message: 'User role changed successfully.',
+            });
         })
-        .catch(error => {
+        .catch((error) => {
             console.error(`Failed to update user role due to ${error}`);
-            res.status(500).send(
-                { message: 'Server error during database query.' },
-            );
+            res.status(500).send({
+                message: 'Server error during database query.',
+            });
         });
 });
 
 /**
- * @api {put} /newRole
+ * @api {put} /users/newRole
  *
  * @apiDescription Allows an admin user to add a new role to the database.
  *
  * @apiName AddNewRole
- * @apiGroup manageroles
+ * @apiGroup ManageRoles
  *
  * @apiBody {String} roleName The name of the new role.
  * @apiBody {Boolean} admin True if the new role has admin privileges.
@@ -98,18 +99,16 @@ mrRouter.post('/newRole', roleCheck('admin'), (req, res) => {
     // Execute the database query
     pool.query(query, [roleName, admin, updateAdd, canDelete, manageUsers])
         .then((result) => {
-            res.status(200).send(
-                {
-                    message: 'Added new role successfully.',
-                    role: result.rows[0],
-                },
-            );
+            res.status(200).send({
+                message: 'Added new role successfully.',
+                role: result.rows[0],
+            });
         })
-        .catch(error => {
+        .catch((error) => {
             console.error(`Failed to add role due to ${error}`);
-            res.status(500).send(
-                { message: 'Server error during database query.' },
-            );
+            res.status(500).send({
+                message: 'Server error during database query.',
+            });
         });
 });
 
