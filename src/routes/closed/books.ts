@@ -38,6 +38,7 @@ const checkDeletePerm = roleCheck('delete');
 
 /**
  * @api {put} /books/update?isbn:=isbn&ratingtype:=ratingtype&changetype:=changetype&value:=value
+ * Update the rating of a book
  *
  * @apiDescription Allows an authenticated user to update a book's rating.
  *   Retrieves the book to be updated with the ISBN. Updates the amount of
@@ -156,7 +157,8 @@ bookRouter.put(
 );
 
 /**
- * @api {post} /books/addBook Request to add a new book
+ * @api {post} /books/addBook
+ * Request to add a new book
  *
  * @apiDescription This api allows an authenticated user with the correct permission to add a new book
  * in the database, with all the required information.

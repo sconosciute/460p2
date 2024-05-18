@@ -30,11 +30,15 @@ const roleCheck = (permission: string) => {
 const checkManagePerm = roleCheck('manage_users');
 
 // Middleware to check if the ChangeUserRole input is valid.
-const checkCURparams = (request: Request, response: Response, next: NextFunction) => {
+const checkCURparams = (
+    request: Request,
+    response: Response,
+    next: NextFunction
+) => {
     const userID = parseInt(request.body.userID);
     const newRoleID = parseInt(request.body.newRoleID);
 
-    if ((!isNaN(userID) && userID >= 1) && (!isNaN(newRoleID) && newRoleID >= 1)) {
+    if (!isNaN(userID) && userID >= 1 && !isNaN(newRoleID) && newRoleID >= 1) {
         next();
     } else {
         response.status(400).json({ error: 'Invalid or missing ID.' });
@@ -42,7 +46,11 @@ const checkCURparams = (request: Request, response: Response, next: NextFunction
 };
 
 // Middleware for validating AddNewRole input is valid.
-const checkANRparams = (request: Request, response: Response, next: NextFunction) => {
+const checkANRparams = (
+    request: Request,
+    response: Response,
+    next: NextFunction
+) => {
     const roleName = request.body.roleName;
     const admin = request.body.admin;
     const updateAdd = request.body.updateAdd;
@@ -51,32 +59,32 @@ const checkANRparams = (request: Request, response: Response, next: NextFunction
 
     if (typeof roleName !== 'string' || roleName.trim() === '') {
         return response.status(400).json({
-            message: 'roleName value must be a non-empty string.'
+            message: 'roleName value must be a non-empty string.',
         });
     }
 
     if (typeof admin !== 'boolean') {
         return response.status(400).json({
-            message: 'admin value must be a boolean.'
+            message: 'admin value must be a boolean.',
         });
     }
 
     if (typeof updateAdd !== 'boolean') {
         return response.status(400).json({
-            message: 'updateAdd must be a boolean.'
+            message: 'updateAdd must be a boolean.',
         });
     }
 
     if (typeof canDelete !== 'boolean') {
         return response.status(400).json({
-            message: 'canDelete must be a boolean.'
+            message: 'canDelete must be a boolean.',
         });
     }
 
     if (typeof manageUsers !== 'boolean') {
         return response.status(400).json({
-            message: 'manageUsers must be a boolean.'
-        })
+            message: 'manageUsers must be a boolean.',
+        });
     }
 
     next();
@@ -84,6 +92,7 @@ const checkANRparams = (request: Request, response: Response, next: NextFunction
 
 /**
  * @api {post} /users/changeUserRole
+ * Change a role in the database
  *
  * @apiDescription Allows an admin user to update a user's role in the database.
  *
@@ -122,6 +131,7 @@ mrRouter.put('/updateRole', checkManagePerm, checkCURparams, (req, res) => {
 
 /**
  * @api {put} /users/newRole
+ * Add a new role to the database
  *
  * @apiDescription Allows an admin user to add a new role to the database.
  *

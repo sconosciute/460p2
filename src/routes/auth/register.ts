@@ -202,7 +202,8 @@ const mwRegisterUser = async (
 };
 
 /**
- * @api {post} /register Request to register a user
+ * @api {post} /register
+ * Request to register a user
  *
  * @apiDescription Document this route. !**Document the password rules here**!
  * !**Document the role rules here**!

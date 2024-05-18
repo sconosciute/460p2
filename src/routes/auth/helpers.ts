@@ -5,6 +5,7 @@ export const authHelpRouter = express.Router();
 
 /**
  * @api {GET} /roles
+ * Get all avaliable roles in the database.
  *
  * @apiDescription Retrieves an array of user roles currently available in the database.
  *

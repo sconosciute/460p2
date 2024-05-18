@@ -29,7 +29,8 @@ const key = {
 };
 
 /**
- * @api {post} /login Request to sign a user in the system
+ * @api {post} /login
+ * Request to sign a user in the system
  *
  * @apiName GetAuth
  * @apiGroup Auth
