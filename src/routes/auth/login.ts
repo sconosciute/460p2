@@ -33,7 +33,7 @@ const key = {
  * @apiName GetAuth
  * @apiGroup Auth
  *
- * @apiHeader {string} authorization "Basic username:password" where username:password is a Base64 encoded string.
+ * @apiHeader {string} authorization "Basic email:password" where email:password is a Base64 encoded string.
  *
  * @apiSuccess {String} accessToken JSON Web Token
  * @apiSuccess {number} id unique user id

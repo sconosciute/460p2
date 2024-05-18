@@ -5,3 +5,12 @@ export interface ISchemaVersion extends QueryResult{
     upgrade_date: Date
 }
 
+export interface IRole {
+    id: number,
+    name: string,
+    admin: boolean,
+    update_add: boolean,
+    delete: boolean,
+    manage_users: boolean
+}
+
