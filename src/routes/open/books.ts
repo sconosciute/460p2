@@ -297,8 +297,8 @@ bookRouter.get(
  * @apiSuccess (200: Success) {IBook[]} books A list of books match the parameters entered.
  * @apiUse IBookFormat
  *
- * @apiError (400 Invalid page) {String} message "The page number in the request is not numeric."
- * @apiError (400 Invalid offset) {String} message "The offset in the request is not numeric."
+ * @apiError (400: Invalid page) {String} message "The page number in the request is not numeric."
+ * @apiError (400: Invalid offset) {String} message "The offset in the request is not numeric."
  * @apiError (400: No parameter) {String} message "None of the required parameter is entered."
  * @apiError (400: Invalid ISBN) {String} message "The ISBN in the request is not numeric."
  * @apiError (400: Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
@@ -369,7 +369,5 @@ bookRouter.get(
         }
     }
 );
-
-//endregion searches
 
 export { bookRouter };
