@@ -25,10 +25,10 @@ const validRatingValue = parameterChecks.validRatingValue;
  * @apiName UpdateBookRating
  * @apiGroup books
  *
- * @apiParam {Int} isbn The ISBN13 of the book to be updated.
- * @apiParam {String="rating_1_star","rating_2_star","rating_3_star", "rating_4_star", "rating_5_star"} ratingtype="rating_1" Which rating to update.
- * @apiParam {String="increaseby","decreaseby","setto"} changetype="increaseby" How to update the rating.
- * @apiParam {Int} value The number to increase or decrease the rating by, or set the rating to this number.
+ * @apiQuery {Int} isbn The ISBN13 of the book to be updated.
+ * @apiQuery {String="rating_1_star","rating_2_star","rating_3_star", "rating_4_star", "rating_5_star"} ratingtype="rating_1" Which rating to update.
+ * @apiQuery {String="increaseby","decreaseby","setto"} changetype="increaseby" How to update the rating.
+ * @apiQuery {Int} value The number to increase or decrease the rating by, or set the rating to this number.
  *
  * @apiSuccess (200: Success) {String} Book ratings updated successfully.
  *
@@ -226,8 +226,8 @@ bookRouter.post('/addBook', (req, res) => {
  * @apiName DeleteBook
  * @apiGroup books
  *
- * @apiParam {Number} id The primary key ID of the book to delete
- * @apiParam {Number} isbn The isbn of the book to delete
+ * @apiQuery {Number} id The primary key ID of the book to delete
+ * @apiQuery {Number} isbn The isbn of the book to delete
  *
  * @apiSuccess (200) {String} Success book was deleted!
  *
@@ -261,7 +261,7 @@ bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFu
 
 
 /**
- * @api {delete} /books Request to delete a range of books
+ * @api {delete} /books/deleteRangeBooks/:min_id/:max_id Request to delete a range of books
  *
  * @apiDescription This deletes a range of books within a minimum book ID and maximum book ID
  * inclusively.
@@ -278,7 +278,7 @@ bookRouter.delete('/deleteBook/:isbn',(req: Request, res: Response, next: NextFu
  * @apiError (401) {String} message "No permission to delete books"
  * @apiError (403) {String} message "Unauthorized user"
  */
-bookRouter.delete('/deleteRangeBooks/:min_id/:max_id', (req: Request, res: Response, next: NextFunction) => {
+bookRouter.delete('/deleteRangeBooks', (req: Request, res: Response, next: NextFunction) => {
     const { min_id, max_id } = req.params;
 
     if (isNaN(Number(min_id)) || isNaN(Number(max_id))) {
