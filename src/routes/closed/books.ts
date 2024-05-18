@@ -61,11 +61,12 @@ const checkDeletePerm = roleCheck('delete');
  * @apiError (400: Bad request) {String} message Invalid value to set or change rating by.
  * @apiError (400: Bad request) {String} message Update incomplete: No book with this ISBN.
  * @apiError (400: Bad request) {String} message Update incomplete: Rating amount cannot be a negative number.
- * @apiError (401: Unauthorized) {String} message User does not have permission to update books.
+ * @apiError (403: Unauthorized) {String} message Token is not valid.
  */
 // Only works for book attributes for now
 bookRouter.put(
     '/update',
+    checkUpdatePerm,
     validISBN,
     validRatingType,
     validRatingChangeType,
@@ -148,7 +149,7 @@ bookRouter.put(
                             'Update incomplete: Rating amount cannot be a negative number.';
                     }
 
-                    res.status(500).send({
+                    res.status(400).send({
                         message: errorMessage,
                     });
                 });

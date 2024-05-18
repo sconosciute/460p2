@@ -229,10 +229,9 @@ const validRatingType = (req: Request, res: Response, next: NextFunction) => {
         'rating_5_star',
     ];
 
+    const ratingtype = req.query.ratingtype;
     if (
-        (req.query.ratingtype &&
-            String(req.query.ratingtype).trim().length == 0) ||
-        !validRatingType.includes(String(req.query.ratingtype))
+        (ratingtype && !validRatingType.includes(String(ratingtype)))
     ) {
         return res.status(400).send({
             message: 'Invalid rating type.',
@@ -254,11 +253,10 @@ const validRatingChangeType = (
 ) => {
     console.log('Rating change type check');
     const validRatingChangeType = ['decreaseby', 'increaseby', 'setto'];
+    const changetype = req.query.changetype;
 
     if (
-        (req.query.changetype &&
-            String(req.query.changetype).trim().length == 0) ||
-        !validRatingChangeType.includes(String(req.query.changetype))
+        (changetype && !validRatingChangeType.includes(String(changetype)))
     ) {
         return res.status(400).send({
             message: 'Invalid rating change type.',
