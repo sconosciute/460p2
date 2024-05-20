@@ -42,7 +42,7 @@ const queryAndResponse = (
     theQuery: string,
     values: string[],
     res: Response,
-    allBooks: boolean
+    allBooks: boolean,
 ) => {
     pool.query(theQuery, values)
         .then((result) => {
@@ -110,7 +110,7 @@ function resultToIBook(toFormat: QueryResult) {
 const checkKwQueryFormat = (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
 ) => {
     if (!req.query.q) {
         next();
@@ -144,7 +144,7 @@ const checkKwQueryFormat = (
 const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
     if (Object.keys(req.query).length > 0) {
         console.log(
-            '\n\nRECEIVED QUERY============================================================'
+            '\n\nRECEIVED QUERY============================================================',
         );
         console.dir(req.query);
         next();
@@ -165,7 +165,7 @@ const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
 const performKeywordSearch = async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
 ) => {
     if (!req.query.q) {
         next();
@@ -263,7 +263,7 @@ bookRouter.get(
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY ${orderQuery[String(req.query.orderby)]} OFFSET $1 LIMIT $2`;
         const values = [String(offset * (page - 1)), String(req.query.offset)];
         queryAndResponse(getBooks, values, res, true);
-    }
+    },
 );
 
 //endregion getAll
@@ -284,6 +284,7 @@ bookRouter.get(
  * @apiName SearchByParameter
  * @apiGroup Books
  *
+ * @apiQuery {String} [q] Web search formatted keywords to search for. May include alphanumeric characters as well as - and ". Providing this parameter will perform a keyword search and ignore other parameters.
  * @apiQuery {String} [title] The title of the book to search for.
  * @apiQuery {Number} [isbn] The ISBN of the book to search for.
  * @apiQuery {String} [author] The author's first and/or last name.
@@ -332,13 +333,13 @@ bookRouter.get(
         // If title entered, append query for title
         if (req.query.title) {
             wheres.push(
-                `(title LIKE $${valIndex++} OR title LIKE $${valIndex++} OR DIFFERENCE(title, $${valIndex++}) > 2)`
+                `(title LIKE $${valIndex++} OR title LIKE $${valIndex++} OR DIFFERENCE(title, $${valIndex++}) > 2)`,
             );
             values.push(
                 String(req.query.title),
                 String(req.query.title).charAt(0).toUpperCase() +
-                    String(req.query.title).slice(1),
-                String(req.query.title)
+                String(req.query.title).slice(1),
+                String(req.query.title),
             );
         }
 
@@ -367,7 +368,7 @@ bookRouter.get(
             values.push(String(offset * (page - 1)), String(req.query.offset));
             queryAndResponse(query, values, res, false);
         }
-    }
+    },
 );
 
 export { bookRouter };

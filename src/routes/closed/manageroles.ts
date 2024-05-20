@@ -91,7 +91,7 @@ const checkANRparams = (
 };
 
 /**
- * @api {post} /users/changeUserRole
+ * @api {put} /users/changeUserRole
  * Change a role in the database
  *
  * @apiDescription Allows an admin user to update a user's role in the database.
@@ -130,7 +130,7 @@ mrRouter.put('/updateRole', checkManagePerm, checkCURparams, (req, res) => {
 });
 
 /**
- * @api {put} /users/newRole
+ * @api {post} /users/newRole
  * Add a new role to the database
  *
  * @apiDescription Allows an admin user to add a new role to the database.
