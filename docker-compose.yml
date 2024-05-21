@@ -15,13 +15,11 @@ services:
         ports:
             - '4000:4000'
         command: npm run dev
-        depends_on:
-            - db
-
+        
     db:
         image: postgres:latest
         ports:
-            - 5432:5432
+            - 5433:5432
         restart: always
         environment:
             POSTGRES_PASSWORD: ads123

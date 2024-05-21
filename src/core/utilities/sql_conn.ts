@@ -11,18 +11,18 @@ const up4Path = 'migrations/up4.sql';
 const pgConfig: PoolConfig =
     process.env.PGHOST !== undefined
         ? {
-            host: process.env.PGHOST,
-            port: parseInt(process.env.PGPORT),
-            user: process.env.PGUSER,
-            database: process.env.PGDATABASE,
-            password: process.env.PGPASSWORD,
-        }
+              host: process.env.PGHOST,
+              port: parseInt(process.env.PGPORT),
+              user: process.env.PGUSER,
+              database: process.env.PGDATABASE,
+              password: process.env.PGPASSWORD,
+          }
         : {
-            connectionString: process.env.DATABASE_URL,
-            ssl: {
-                rejectUnauthorized: false,
-            },
-        };
+              connectionString: process.env.DATABASE_URL,
+              ssl: {
+                  rejectUnauthorized: false,
+              },
+          };
 
 const pool = new Pool(pgConfig);
 
@@ -30,13 +30,18 @@ const pool = new Pool(pgConfig);
  * Runs database up migrations from current detected version.
  */
 async function migrate() {
+    let failCount = 0;
     try {
         const res = await pool.query('SELECT * FROM schema_version');
-        await migrateFromVersion(res.rows[0].version)
+        await migrateFromVersion(res.rows[0].version);
     } catch (err) {
         //Err 42P01 = failed to find table
         if (err.code == '42P01') {
             await migrateFromVersion(0);
+        } else if (err.code == 'ECONNREFUSED' && failCount < 15) {
+            failCount++;
+            await new Promise((f) => setTimeout(f, 2000));
+            migrate();
         } else {
             console.error(`Unable to upgrade database due to ${err}`);
         }
@@ -45,23 +50,25 @@ async function migrate() {
 
 async function migrateFromVersion(version: number) {
     switch (version) {
-        case 0 :
+        case 0:
             console.log('Upgrading DB Schema to V1');
             await upgrade(up1Path);
-        case 1 :
+        case 1:
             console.log('Upgrading DB Schema to V2');
             await upgrade(up2Path);
-        case 2 :
+        case 2:
             console.log('Upgrading DB Schema to V3');
             await upgrade(up3Path);
-        case 3 :
+        case 3:
             console.log('Upgrading to DB Schema V4');
             await upgrade(up4Path);
-        case 4 :
+        case 4:
             console.log('DB Schema V4 up to date');
             break;
-        default :
-            throw new Error(`Unrecognized database schema version ${version}, panicking!`);
+        default:
+            throw new Error(
+                `Unrecognized database schema version ${version}, panicking!`
+            );
     }
 }
 
@@ -70,7 +77,7 @@ async function upgrade(path: string) {
         const query = fs.readFileSync(path);
         console.log('Retrieved migration script, running upgrade');
         await pool.query(query.toString());
-        console.log('Upgraded DB Schema Successfully')
+        console.log('Upgraded DB Schema Successfully');
     } catch (err) {
         console.error(`Failed to upgrade DB schema due to ${err}`);
         throw err;
