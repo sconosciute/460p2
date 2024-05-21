@@ -26,6 +26,7 @@
                 "format": ["camelCase"]
             }
         ],
-        "@typescript-eslint/no-unused-vars": "warn"
+        "@typescript-eslint/no-unused-vars": "warn",
+        "no-fallthrough": "off"
     }
 }
