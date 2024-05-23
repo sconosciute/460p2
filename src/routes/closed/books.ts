@@ -61,12 +61,10 @@ const checkDeletePerm = roleCheck('delete');
  * @apiError (400: Bad request) {String} message Invalid value to set or change rating by.
  * @apiError (400: Bad request) {String} message Update incomplete: No book with this ISBN.
  * @apiError (400: Bad request) {String} message Update incomplete: Rating amount cannot be a negative number.
- * @apiError (403: Unauthorized) {String} message Token is not valid.
  */
 // Only works for book attributes for now
 bookRouter.put(
     '/update',
-    checkUpdatePerm,
     validISBN,
     validRatingType,
     validRatingChangeType,
@@ -169,7 +167,8 @@ bookRouter.put(
  *
  * @apiBody {Number} id The added book's id
  * @apiBody {Number} isbn-13 An identifier of the book
- * @apiBody {String} authors The creator of the book can have more than one
+ * @apiBody {String} authors The creator of the book can have more than one. Different authors should be
+ * separated using semicolon (;).
  * @apiBody {Number} publication year A number that shows when the book was published
  * @apiBody {String} original_title Name the book was first given
  * @apiBody {String} title Another name for the book
@@ -185,12 +184,12 @@ bookRouter.put(
  *
  * @apiSuccess (201: Success) {String} Success new book was added to the database
  *
- * @apiError (400: Missing parameter) {String} message "Required information for new book is missing"
- * @apiError (403: Unauthorized user) {String} message "You do not have access to add book"
- * @apiError (401: Permission denied) {String} message "You do not have permission to add book"
+ * @apiError (400: Missing parameter) {String} message Required information for new book is missing
+ * @apiError (400: Bad Request) {string} message ISBN must be exactly 13 digits long and consist only of numbers.
+ * @apiError (400: Bad Request) {string} Rating fields must be numbers or decimals.
  */
 
-bookRouter.post('/addBook', checkUpdatePerm, async (req, res) => {
+bookRouter.post('/addBook', async (req, res) => {
     const {
         id,
         isbn13,
@@ -339,31 +338,15 @@ bookRouter.post('/addBook', checkUpdatePerm, async (req, res) => {
  *
  * @apiSuccess (200: Success) {String} Success book was deleted!
  *
- * @apiError (400: No book match) {String} message "No books found matching the criteria"
- * @apiError (401: Permission denied) {String} message "No permission to delete books"
- * @apiError (403: Unauthorized user) {String} message "Unauthorized user"
+ * @apiError (400: No book match) {String} message No books found matching the criteria.
+ * @apiError (400: Bad Request) {String} message The ISBN in the request is not numeric.
+ * @apiError (400: Bad Request) {String} message The ISBN in the request is not 13 digits long.
  */
 bookRouter.delete(
     '/deleteIsbn',
-    checkDeletePerm,
     parameterChecks.validISBN,
     (req: Request, res: Response, next: NextFunction) => {
         const isbn = req.query.isbn as string;
-
-        pool.query(
-            'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)',
-            [isbn]
-        )
-            .then(() => {
-                return pool.query('DELETE FROM books WHERE isbn13 = $1', [
-                    isbn,
-                ]);
-            })
-            .then(() => {
-                res.status(200).send({
-                    message: 'Success book was deleted!.',
-                });
-            });
         pool.query(
             'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)',
             [isbn]
@@ -402,13 +385,12 @@ bookRouter.delete(
  *
  * @apiSuccess (200: Success) {String} Success Range of books deleted!
  *
- * @apiError (400: No book match) {String} message "No books found matching the criteria"
- * @apiError (401: Permission denied) {String} message "No permission to delete books"
- * @apiError (403: Unauthorized user) {String} message "Unauthorized user"
+ * @apiError (400: No book match) {String} message No books found matching the criteria.
+ * @apiError (400: Bad Request) {string} message Please provide valid min_id and max_id parameters.
+ * @apiError (400: Bad Request) {string} message Min range must be less than max range.
  */
 bookRouter.delete(
     '/deleteRangeBooks',
-    checkDeletePerm,
     (req: Request, res: Response, next: NextFunction) => {
         const { min_id, max_id } = req.query;
 

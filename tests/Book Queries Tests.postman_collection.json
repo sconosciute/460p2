@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "19f0734d-0dd4-494a-8e94-cb1c49e7060f",
+		"_postman_id": "9a9bb520-35a2-4bc8-b55f-1f348773201e",
 		"name": "Book Queries Tests",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "35010674"
+		"_exporter_id": "34052929"
 	},
 	"item": [
 		{
@@ -1463,71 +1463,6 @@
 					"response": []
 				},
 				{
-					"name": "min&max - all ratings",
-					"event": [
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"pm.sendRequest({\r",
-									"    url: pm.collectionVariables.get(\"base_url\") + \"/books/all?page=1&offset=10000\",\r",
-									"    method: \"GET\"\r",
-									"}, function(err, res) {\r",
-									"    if (err == null) {\r",
-									"        pm.collectionVariables.set(\"all_book_count\", res.json().books.length);\r",
-									"    }\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"pm.test(\"200 Success\", () => {\r",
-									"    pm.response.to.have.status(200);\r",
-									"})\r",
-									"\r",
-									"pm.test(\"Rating 1 - 5 includes all books\", () => {\r",
-									"    pm.expect(response.books.length).to.be.eql(pm.collectionVariables.get(\"all_book_count\"))\r",
-									"})"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/books/search?min=1&max=5",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"search"
-							],
-							"query": [
-								{
-									"key": "min",
-									"value": "1"
-								},
-								{
-									"key": "max",
-									"value": "5"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "min&max - min greater than max",
 					"event": [
 						{
@@ -1736,32 +1671,6 @@
 			"name": "Closed Routes",
 			"item": [
 				{
-					"name": "Register new user",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"firstname\": \"{{$randomFirstName}}\",\r\n    \"lastname\": \"{{$randomLastName}}\",\r\n    \"username\": \"{{$randomUserName}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"phone\": \"{{$randomPhoneNumber}}\",\r\n    \"role\": 1,\r\n    \"password\": \"password!\"\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Delete Book - valid isbn",
 					"event": [
 						{
@@ -1784,16 +1693,6 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "DELETE",
 						"header": [
 							{
@@ -1845,12 +1744,7 @@
 					],
 					"request": {
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "",
@@ -1904,12 +1798,7 @@
 					],
 					"request": {
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/deleteIsbn?isbn=978030",
 							"host": [
@@ -1923,76 +1812,6 @@
 								{
 									"key": "isbn",
 									"value": "978030"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Book - No permission",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"pm.test(\"Check for missing auth token\", function () {\r",
-									"    if (pm.response.code === 401) {\r",
-									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
-									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
-									"    }\r",
-									"});\r",
-									"\r",
-									"//remove the token"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"pm.request.headers.remove('authorization');"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/books/deleteIsbn?isbn=1234567891234",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"deleteIsbn"
-							],
-							"query": [
-								{
-									"key": "isbn",
-									"value": "1234567891234"
 								}
 							]
 						}
@@ -2023,23 +1842,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=18&max_id=20",
 							"host": [
@@ -2087,23 +1891,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=a&max_id=20",
 							"host": [
@@ -2151,23 +1940,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=50&max_id=20",
 							"host": [
@@ -2215,23 +1989,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=50&max_id=20",
 							"host": [
@@ -2245,79 +2004,6 @@
 								{
 									"key": "min_id",
 									"value": "50"
-								},
-								{
-									"key": "max_id",
-									"value": "20"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Delete Range Book - No permission",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"\r",
-									"pm.test(\"Check for missing auth token\", function () {\r",
-									"    if (pm.response.code === 401) {\r",
-									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
-									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
-									"    }\r",
-									"});\r",
-									"\r",
-									"//remove the token"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"pm.request.headers.remove('Authorization');"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "",
-									"type": "string"
-								}
-							]
-						},
-						"method": "DELETE",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/books/deleteRangeBooks?min_id=19&max_id=20",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"deleteRangeBooks"
-							],
-							"query": [
-								{
-									"key": "min_id",
-									"value": "19"
 								},
 								{
 									"key": "max_id",
@@ -2348,23 +2034,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"id\": 295210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"John Smith\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
@@ -2421,23 +2092,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
@@ -2494,23 +2150,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812312\",\r\n    \"authors\": \"\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
@@ -2567,23 +2208,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812a\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 150,\r\n    \"rating_4_star\": 300,\r\n    \"rating_5_star\": 425,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
@@ -2640,23 +2266,8 @@
 						}
 					],
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{token}}",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812123\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": \"a\",\r\n    \"rating_4_star\": \"b\",\r\n    \"rating_5_star\": \"c\",\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
@@ -2692,57 +2303,13 @@
 					"response": []
 				},
 				{
-					"name": "Post add Book - No permission for adding",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test(\"Check for missing auth token\", function () {\r",
-									"    if (pm.response.code === 401) {\r",
-									"        pm.expect(pm.response.json()).to.have.property('message', \"Auth token is not supplied\");\r",
-									"        pm.expect(pm.response.json()).to.have.property('success', false);\r",
-									"    }\r",
-									"});\r",
-									"\r",
-									"//remove auth to see"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						},
-						{
-							"listen": "prerequest",
-							"script": {
-								"exec": [
-									"pm.request.headers.remove('Authorization');"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
+					"name": "New Role",
 					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "",
-									"type": "string"
-								}
-							]
-						},
 						"method": "POST",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"id\": 395210,\r\n    \"isbn13\": \"1234567812123\",\r\n    \"authors\": \"Group 9\",\r\n    \"publication_year\": 2024,\r\n    \"original_title\": \"Group 9 test\",\r\n    \"title\": \"test\",\r\n    \"rating_avg\": 4.5,\r\n    \"rating_count\": 1000,\r\n    \"rating_1_star\": 1000,\r\n    \"rating_2_star\": 75,\r\n    \"rating_3_star\": 1,\r\n    \"rating_4_star\": 2,\r\n    \"rating_5_star\": 3,\r\n    \"image_url\": \"https://example.com/book.jpg\",\r\n    \"image_small_url\": \"https://example.com/book_small.jpg\"\r\n}",
+							"raw": "{\r\n    \"roleName\": \"{{$randomWord}}\",\r\n    \"admin\": true,\r\n    \"updateAdd\": true,\r\n    \"canDelete\": true,\r\n    \"manageUsers\": true\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2750,25 +2317,39 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/books/addBook",
+							"raw": "{{base_url}}/users/newRole",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
-								"books",
-								"addBook"
-							],
-							"query": [
-								{
-									"key": "min_id",
-									"value": "50",
-									"disabled": true
-								},
-								{
-									"key": "max_id",
-									"value": "20",
-									"disabled": true
+								"users",
+								"newRole"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register new user",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"firstname\": \"{{$randomFirstName}}\",\r\n    \"lastname\": \"{{$randomLastName}}\",\r\n    \"username\": \"{{$randomUserName}}\",\r\n    \"email\": \"{{$randomEmail}}\",\r\n    \"phone\": \"{{$randomPhoneNumber}}\",\r\n    \"role\": 1,\r\n    \"password\": \"password!\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
 								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/register",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"register"
 							]
 						}
 					},
@@ -2795,15 +2376,10 @@
 					"name": "Change user role",
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"userID\": 16,\r\n    \"newRoleID\": 3\r\n}",
+							"raw": "{\r\n    \"userID\": 1,\r\n    \"newRoleID\": 3\r\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -2818,38 +2394,6 @@
 							"path": [
 								"users",
 								"updateRole"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "New Role",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "{{token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\r\n    \"roleName\": \"{{$randomWord}}\",\r\n    \"admin\": true,\r\n    \"updateAdd\": true,\r\n    \"canDelete\": true,\r\n    \"manageUsers\": true\r\n}",
-							"options": {
-								"raw": {
-									"language": "json"
-								}
-							}
-						},
-						"url": {
-							"raw": "{{base_url}}/users/newRole",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"users",
-								"newRole"
 							]
 						}
 					},
@@ -2879,13 +2423,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780439023480&ratingtype=rating_1_star&changetype=increaseby&value=5",
 							"host": [
@@ -2941,13 +2479,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780307948690&ratingtype=rating_2_star&changetype=increaseby&value=7",
 							"host": [
@@ -3003,13 +2535,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780439554930&ratingtype=rating_3_star&changetype=increaseby&value=39",
 							"host": [
@@ -3065,13 +2591,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780060764890&ratingtype=rating_4_star&changetype=increaseby&value=13",
 							"host": [
@@ -3127,13 +2647,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780143038410&ratingtype=rating_5_star&changetype=increaseby&value=1000",
 							"host": [
@@ -3189,13 +2703,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9781565125600&ratingtype=rating_1_star&changetype=setto&value=13280",
 							"host": [
@@ -3251,13 +2759,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780307347980&ratingtype=rating_2_star&changetype=setto&value=32663",
 							"host": [
@@ -3313,13 +2815,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780439554930&ratingtype=rating_3_star&changetype=setto&value=173849",
 							"host": [
@@ -3375,13 +2871,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780316160190&ratingtype=rating_4_star&changetype=setto&value=392772",
 							"host": [
@@ -3437,13 +2927,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780316160190&ratingtype=rating_5_star&changetype=setto&value=585377",
 							"host": [
@@ -3499,13 +2983,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780060513030&ratingtype=rating_1_star&changetype=decreaseby&value=15",
 							"host": [
@@ -3561,13 +3039,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780060513030&ratingtype=rating_2_star&changetype=decreaseby&value=333",
 							"host": [
@@ -3623,13 +3095,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780007442910&ratingtype=rating_3_star&changetype=decreaseby&value=188",
 							"host": [
@@ -3685,13 +3151,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780141439470&ratingtype=rating_4_star&changetype=decreaseby&value=1",
 							"host": [
@@ -3747,13 +3207,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780450040180&ratingtype=rating_5_star&changetype=decreaseby&value=2000",
 							"host": [
@@ -3809,13 +3263,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=0001112220000&ratingtype=rating_5_star&changetype=decreaseby&value=2000",
 							"host": [
@@ -3871,13 +3319,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780316068050&ratingtype=rating_1_star&changetype=decreaseby&value=50000",
 							"host": [
@@ -3933,13 +3375,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780316068050&ratingtype=rating_4_star&changetype=setto&value=-1",
 							"host": [
@@ -3972,68 +3408,6 @@
 					"response": []
 				},
 				{
-					"name": "Update Rating - invalid; unauthorized",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"const response = pm.response.json();\r",
-									"\r",
-									"pm.test(\"Expected 403 status\", () => {\r",
-									"    pm.response.to.have.status(403);\r",
-									"})\r",
-									"\r",
-									"pm.test(\"Response body message is correct\", function () {\r",
-									"    pm.expect(response.message).to.eql('Token is not valid');\r",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {}
-							}
-						}
-					],
-					"request": {
-						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "\"not a real token!\"",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/books/update?isbn=9780743247540&ratingtype=rating_1_star&changetype=setto&value=10000000",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"books",
-								"update"
-							],
-							"query": [
-								{
-									"key": "isbn",
-									"value": "9780743247540"
-								},
-								{
-									"key": "ratingtype",
-									"value": "rating_1_star"
-								},
-								{
-									"key": "changetype",
-									"value": "setto"
-								},
-								{
-									"key": "value",
-									"value": "10000000"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Update Rating - invalid rating type",
 					"event": [
 						{
@@ -4057,13 +3431,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780141439600&ratingtype=rating_10_star&changetype=increaseby&value=1",
 							"host": [
@@ -4119,13 +3487,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780141439600&ratingtype=rating_2_star&changetype=multipleby&value=2",
 							"host": [
@@ -4181,13 +3543,7 @@
 					],
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "authorization",
-								"value": "{{token}}",
-								"type": "text"
-							}
-						],
+						"header": [],
 						"url": {
 							"raw": "{{base_url}}/books/update?isbn=9780141439600&ratingtype=rating_5_star&changetype=setto&value=thirty",
 							"host": [
@@ -4274,10 +3630,6 @@
 			"key": "last_page",
 			"value": "",
 			"type": "string"
-		},
-		{
-			"key": "all_book_count",
-			"value": ""
 		}
 	]
 }

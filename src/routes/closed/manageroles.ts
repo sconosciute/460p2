@@ -102,13 +102,12 @@ const checkANRparams = (
  * @apiBody {Integer} userID The ID of the user that will have their role changed.
  * @apiBody {Integer} newRoleID The ID of the user's new role.
  *
- * @apiSuccess (200: Success) {String} message 'User role changed successfully.'
+ * @apiSuccess (200: Success) {String} message User role changed successfully.
  *
- * @apiError (400: Bad request) {String} message 'Invalid or missing ID.'
- * @apiError (401: Invalid token) {String} message 'User not authorized to perform this action.'
- * @apiError (500: Internal server error) {String} message 'Server error during database query.'
+ * @apiError (400: Bad request) {String} message Invalid or missing ID.
+ * @apiError (500: Internal server error) {String} message Server error during database query.
  */
-mrRouter.put('/updateRole', checkManagePerm, checkCURparams, (req, res) => {
+mrRouter.put('/updateRole', checkCURparams, (req, res) => {
     const userID = req.body.userID;
     const newRoleID = req.body.newRoleID;
     const query = `UPDATE account
@@ -144,18 +143,17 @@ mrRouter.put('/updateRole', checkManagePerm, checkCURparams, (req, res) => {
  * @apiBody {Boolean} canDelete True if the new role can delete books.
  * @apiBody {Boolean} manageUsers True if the new role can manage users.
  *
- * @apiSuccess (200: Success) {String} message 'Added new role successfully.'
+ * @apiSuccess (200: Success) {String} message Added new role successfully.
  * @apiSuccess (200: Success) {IRole} role the roles object including id, name, admin, update_add, delete, manage_users
  *
- * @apiError (400: Bad request) {String} message 'roleName value must be a non-empty string.'
- * @apiError (400: Bad request) {String} message 'admin value must be a boolean.'
- * @apiError (400: Bad request) {String} message 'updateAdd value must be a boolean.'
- * @apiError (400: Bad request) {String} message 'canDelete value must be a boolean.'
- * @apiError (400: Bad request) {String} message 'manageUsers value must be a boolean.'
- * @apiError (401: Invalid token) {String} message 'User not authorized to perform this action.'
- * @apiError (500: Internal server error) {String} message 'Server error during database query.'
+ * @apiError (400: Bad request) {String} message roleName value must be a non-empty string.
+ * @apiError (400: Bad request) {String} message admin value must be a boolean.
+ * @apiError (400: Bad request) {String} message updateAdd value must be a boolean.
+ * @apiError (400: Bad request) {String} message canDelete value must be a boolean.
+ * @apiError (400: Bad request) {String} message manageUsers value must be a boolean.
+ * @apiError (500: Internal server error) {String} message Server error during database query.
  */
-mrRouter.post('/newRole', roleCheck('admin'), checkANRparams, (req, res) => {
+mrRouter.post('/newRole', checkANRparams, (req, res) => {
     const roleName = req.body.roleName;
     const admin = req.body.admin;
     const updateAdd = req.body.updateAdd;

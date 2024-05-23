@@ -42,7 +42,7 @@ const queryAndResponse = (
     theQuery: string,
     values: string[],
     res: Response,
-    allBooks: boolean,
+    allBooks: boolean
 ) => {
     pool.query(theQuery, values)
         .then((result) => {
@@ -110,7 +110,7 @@ function resultToIBook(toFormat: QueryResult) {
 const checkKwQueryFormat = (
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ) => {
     if (!req.query.q) {
         next();
@@ -144,7 +144,7 @@ const checkKwQueryFormat = (
 const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
     if (Object.keys(req.query).length > 0) {
         console.log(
-            '\n\nRECEIVED QUERY============================================================',
+            '\n\nRECEIVED QUERY============================================================'
         );
         console.dir(req.query);
         next();
@@ -165,7 +165,7 @@ const checkHasQuery = (req: Request, res: Response, next: NextFunction) => {
 const performKeywordSearch = async (
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
 ) => {
     if (!req.query.q) {
         next();
@@ -241,10 +241,10 @@ const performKeywordSearch = async (
  * @apiSuccess (200: Success) {IBook[]} books A list of books in the given page.
  * @apiUse IBookFormat
  *
- * @apiError (400: Invalid page) {String} message "The page number in the request is not numeric."
- * @apiError (400: Invalid offset) {String} message "The offset in the request is not numeric."
- * @apiError (400: No book found) {String} message "Unexpected error - cannot retrieve books."
- * @apiError (500: Server error) {String} message "Server error - Contact Support."
+ * @apiError (400: Invalid page) {String} message The page number in the request is not numeric.
+ * @apiError (400: Invalid offset) {String} message The offset in the request is not numeric.
+ * @apiError (400: No book found) {String} message Unexpected error - cannot retrieve books.
+ * @apiError (500: Server error) {String} message Server error - Contact Support.
  */
 bookRouter.get(
     '/all',
@@ -263,7 +263,7 @@ bookRouter.get(
         const getBooks = `${getBooksAndAuthorsQuery} ORDER BY ${orderQuery[String(req.query.orderby)]} OFFSET $1 LIMIT $2`;
         const values = [String(offset * (page - 1)), String(req.query.offset)];
         queryAndResponse(getBooks, values, res, true);
-    },
+    }
 );
 
 //endregion getAll
@@ -298,16 +298,16 @@ bookRouter.get(
  * @apiSuccess (200: Success) {IBook[]} books A list of books match the parameters entered.
  * @apiUse IBookFormat
  *
- * @apiError (400: Invalid page) {String} message "The page number in the request is not numeric."
- * @apiError (400: Invalid offset) {String} message "The offset in the request is not numeric."
- * @apiError (400: No parameter) {String} message "None of the required parameter is entered."
- * @apiError (400: Invalid ISBN) {String} message "The ISBN in the request is not numeric."
- * @apiError (400: Invalid ISBN) {String} message "The ISBN in the request is not 13 digits long."
- * @apiError (400: Invalid Min/Max) {String} message "Min is greater than max."
- * @apiError (400: Blank parameter) {String} message "Title cannot be blank."
- * @apiError (400: Blank parameter) {String} message "ISBN cannot be blank."
- * @apiError (400: Blank parameter) {String} message "Author cannot be blank."
- * @apiError (500: Server error) {String} message "Server error - Contact Support."
+ * @apiError (400: Invalid page) {String} message The page number in the request is not numeric.
+ * @apiError (400: Invalid offset) {String} message The offset in the request is not numeric.
+ * @apiError (400: No parameter) {String} message None of the required parameter is entered.
+ * @apiError (400: Invalid ISBN) {String} message The ISBN in the request is not numeric.
+ * @apiError (400: Invalid ISBN) {String} message The ISBN in the request is not 13 digits long.
+ * @apiError (400: Invalid Min/Max) {String} message Min is greater than max.
+ * @apiError (400: Blank parameter) {String} message Title cannot be blank.
+ * @apiError (400: Blank parameter) {String} message ISBN cannot be blank.
+ * @apiError (400: Blank parameter) {String} message Author cannot be blank.
+ * @apiError (500: Server error) {String} message Server error - Contact Support.
  */
 bookRouter.get(
     '/search',
@@ -333,13 +333,13 @@ bookRouter.get(
         // If title entered, append query for title
         if (req.query.title) {
             wheres.push(
-                `(title LIKE $${valIndex++} OR title LIKE $${valIndex++} OR DIFFERENCE(title, $${valIndex++}) > 2)`,
+                `(title LIKE $${valIndex++} OR title LIKE $${valIndex++} OR DIFFERENCE(title, $${valIndex++}) > 2)`
             );
             values.push(
                 String(req.query.title),
                 String(req.query.title).charAt(0).toUpperCase() +
-                String(req.query.title).slice(1),
-                String(req.query.title),
+                    String(req.query.title).slice(1),
+                String(req.query.title)
             );
         }
 
@@ -368,7 +368,7 @@ bookRouter.get(
             values.push(String(offset * (page - 1)), String(req.query.offset));
             queryAndResponse(query, values, res, false);
         }
-    },
+    }
 );
 
 export { bookRouter };

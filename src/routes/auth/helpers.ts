@@ -21,7 +21,7 @@ export const authHelpRouter = express.Router();
  *          ]
  *      }
  *
- * @apiError (500: Server error) If roles could not be retrieved from the database.
+ * @apiError (500: Server error) message If roles could not be retrieved from the database.
  */
 authHelpRouter.get(
     '/roles',

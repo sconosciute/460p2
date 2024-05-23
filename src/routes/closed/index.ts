@@ -1,14 +1,13 @@
-import express, { NextFunction, Router, Response } from 'express';
+import express, { Router } from 'express';
 
-import { checkToken } from '../../core/middleware';
 import { tokenTestRouter } from './tokenTest';
 import { bookRouter } from './books';
 import { mrRouter } from './manageroles';
 
 const closedRoutes: Router = express.Router();
 
-closedRoutes.use('/jwt_test', checkToken, tokenTestRouter);
-closedRoutes.use('/books', checkToken, bookRouter);
-closedRoutes.use('/users', checkToken, mrRouter);
+closedRoutes.use('/jwt_test', tokenTestRouter);
+closedRoutes.use('/books', bookRouter);
+closedRoutes.use('/users', mrRouter);
 
 export { closedRoutes };
