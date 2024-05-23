@@ -19,7 +19,7 @@ services:
     db:
         image: postgres:latest
         ports:
-            - 5433:5432
+            - 5432:5432
         restart: always
         environment:
             POSTGRES_PASSWORD: ads123
