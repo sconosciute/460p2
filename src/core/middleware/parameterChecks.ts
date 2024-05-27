@@ -114,10 +114,11 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
 const validISBN = (req: Request, res: Response, next: NextFunction) => {
     console.log('ISBN Check');
     const pat = /^[0-9]{13}$/gm;
-    if (!req.query.isbn13) {
+    const isbn = req.query.isbn13 || req.body['isbn13']
+    if (!isbn) {
         next();
     } else {
-        if (!isNumberProvided(req.query.isbn13) || !pat.test(<string>(req.query?.isbn13))) {
+        if (!isNumberProvided(isbn) || !pat.test(<string>(isbn))) {
             console.error('ISBN is invalid');
             res.status(400).send({
                 message: 'Can not parse ISBN.',
@@ -137,9 +138,10 @@ const validISBN = (req: Request, res: Response, next: NextFunction) => {
  */
 const validTitle = (req: Request, res: Response, next: NextFunction) => {
     console.log('Title Check');
+    const title = req.query.title || req.body['title'];
     if (
-        !req.query.title ||
-        validationFunctions.isStringProvided(req.query.title)
+        !title ||
+        validationFunctions.isStringProvided(title)
     ) {
         next();
     } else {
@@ -158,9 +160,10 @@ const validTitle = (req: Request, res: Response, next: NextFunction) => {
  */
 const validAuthor = (req: Request, res: Response, next: NextFunction) => {
     console.log('author check');
+    const author = req.query.author || req.body['author'];
     if (
-        !req.query.author ||
-        validationFunctions.isStringProvided(req.query.author)
+        !author ||
+        validationFunctions.isStringProvided(author)
     ) {
         next();
     } else {

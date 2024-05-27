@@ -1,16 +1,21 @@
 // Express is the framework we're going to use to handle requests
 import express, { NextFunction, Request, Response, Router } from 'express';
 // Access the connection to Postgres Database
-import { pool } from '../../core/utilities';
+import { pool, validationFunctions } from '../../core/utilities';
 import { parameterChecks } from '../../core/middleware';
 import { IJwtRequest } from '../../core/models';
 
 const bookRouter: Router = express.Router();
 
-const validRatingType = parameterChecks.validRatingType;
-const validRatingChangeType = parameterChecks.validRatingChangeType;
-const validISBN = parameterChecks.validISBN;
-const validRatingValue = parameterChecks.validRatingValue;
+
+const {
+    validRatingType,
+    validRatingChangeType,
+    validISBN,
+    validRatingValue,
+    validTitle,
+    validAuthor,
+} = parameterChecks;
 
 //region middleware
 const roleCheck = (permission: string) => {
@@ -76,7 +81,8 @@ bookRouter.put(
         const value = Number(req.query.value);
 
         // Build SQL query
-        let query = `UPDATE books SET ${ratingtype} = `;
+        let query = `UPDATE books
+                     SET ${ratingtype} = `;
 
         if (changetype === 'increaseby') {
             query += `${ratingtype} + $1 `;
@@ -100,7 +106,9 @@ bookRouter.put(
                 }
             })
             .then(() => {
-                const ratingCount = `SELECT ${ratingtype} FROM books WHERE isbn13 = $1;`;
+                const ratingCount = `SELECT ${ratingtype}
+                                     FROM books
+                                     WHERE isbn13 = $1;`;
                 return pool.query(ratingCount, [isbn]);
             })
             .then((result) => {
@@ -119,12 +127,19 @@ bookRouter.put(
             })
             .then((countPromise) => {
                 // Update total rating count
-                const calcCount = `UPDATE books SET rating_count = rating_1_star + rating_2_star + rating_3_star + rating_4_star + rating_5_star WHERE isbn13 = $1`;
+                const calcCount = `UPDATE books
+                                   SET rating_count = rating_1_star + rating_2_star + rating_3_star + rating_4_star +
+                                                      rating_5_star
+                                   WHERE isbn13 = $1`;
                 return pool.query(calcCount, [isbn]);
             })
             .then((avgPromise) => {
                 // Update average rating
-                const calcAvg = `UPDATE books SET rating_avg = ROUND((rating_1_star + 2*rating_2_star + 3*rating_3_star + 4*rating_4_star + 5*rating_5_star) / CAST(rating_count AS DECIMAL(30,1)), 2) WHERE isbn13 = $1`;
+                const calcAvg = `UPDATE books
+                                 SET rating_avg = ROUND(
+                                         (rating_1_star + 2 * rating_2_star + 3 * rating_3_star + 4 * rating_4_star +
+                                          5 * rating_5_star) / CAST(rating_count AS DECIMAL(30, 1)), 2)
+                                 WHERE isbn13 = $1`;
                 return pool.query(calcAvg, [isbn]);
             })
             .then(() => {
@@ -152,7 +167,7 @@ bookRouter.put(
                     });
                 });
             });
-    }
+    },
 );
 
 /**
@@ -165,8 +180,7 @@ bookRouter.put(
  * @apiName PostAddBook
  * @apiGroup Books
  *
- * @apiBody {Number} id The added book's id
- * @apiBody {Number} isbn-13 An identifier of the book
+ * @apiBody {Number} isbn13 An identifier of the book
  * @apiBody {String} authors The creator of the book can have more than one. Different authors should be
  * separated using semicolon (;).
  * @apiBody {Number} publication year A number that shows when the book was published
@@ -189,141 +203,86 @@ bookRouter.put(
  * @apiError (400: Bad Request) {string} Rating fields must be numbers or decimals.
  */
 
-bookRouter.post('/addBook', async (req, res) => {
-    const {
-        id,
-        isbn13,
-        authors,
-        publication_year,
-        original_title,
-        title,
-        rating_avg,
-        rating_count,
-        rating_1_star,
-        rating_2_star,
-        rating_3_star,
-        rating_4_star,
-        rating_5_star,
-        image_url,
-        image_small_url,
-    } = req.body;
-
-    // Check if ISBN-13 is valid
-    if (
-        !isbn13 ||
-        typeof isbn13 !== 'string' ||
-        isbn13.length !== 13 ||
-        !/^\d{13}$/.test(isbn13)
-    ) {
-        return res
-            .status(400)
-            .send(
-                'ISBN must be exactly 13 digits long and consist only of numbers'
-            );
-    }
-
-    const requiredFields = [
-        'id',
-        'isbn13',
-        'authors',
-        'publication_year',
-        'original_title',
-        'title',
-        'rating_avg',
-        'rating_count',
-        'rating_1_star',
-        'rating_2_star',
-        'rating_3_star',
-        'rating_4_star',
-        'rating_5_star',
-        'image_url',
-        'image_small_url',
-    ];
-    const missingFields = requiredFields.filter((field) => !req.body[field]);
-    if (missingFields.length > 0) {
-        return res
-            .status(400)
-            .send('Required information for new book is missing');
-    }
-
-    const ratingFields = [
-        'rating_avg',
-        'rating_count',
-        'rating_1_star',
-        'rating_2_star',
-        'rating_3_star',
-        'rating_4_star',
-        'rating_5_star',
-    ];
-    const invalidRatings = ratingFields.filter((field) =>
-        isNaN(req.body[field])
-    );
-    if (invalidRatings.length > 0) {
-        return res
-            .status(400)
-            .send('Rating fields must be numbers or decimals');
-    }
-
-    const client = await pool.connect();
-
-    try {
-        await client.query('BEGIN');
-
-        // Check if the id already exists
-        const idCheckResult = await client.query(
-            'SELECT 1 FROM books WHERE id = $1',
-            [id]
-        );
-        if (idCheckResult.rows.length > 0) {
-            await client.query('ROLLBACK');
-            return res.status(400).send('ID already exists');
+bookRouter.post('/addBook',
+    validISBN,
+    validRatingType,
+    async (req, res, next) => {
+        const rates = [req.body.rating_1_star, req.body.rating_2_star, req.body.rating_3_star, req.body.rating_4_star, req.body.rating_5_star];
+        if (rates.map(validationFunctions.isNumberProvided).reduce((lastVal, val) => lastVal && val, true)) {
+            next();
+        } else {
+            res.status(400).send({message: "Rating counts 1-5 must be all be present and numeric."})
         }
+    },
+    validTitle,
+    validAuthor,
+    async (req, res) => {
+        const {
+            isbn13,
+            authors,
+            publication_year,
+            original_title,
+            title,
+            rating_avg,
+            rating_count,
+            rating_1_star,
+            rating_2_star,
+            rating_3_star,
+            rating_4_star,
+            rating_5_star,
+            image_url,
+            image_small_url,
+        } = req.body;
 
-        const bookInsertResult = await client.query(
-            'INSERT INTO books (id, isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *',
-            [
-                id,
-                isbn13,
-                publication_year,
-                original_title,
-                title,
-                rating_avg,
-                rating_count,
-                rating_1_star,
-                rating_2_star,
-                rating_3_star,
-                rating_4_star,
-                rating_5_star,
-                image_url,
-                image_small_url,
-            ]
-        );
+        const client = await pool.connect();
 
-        const bookId = bookInsertResult.rows[0].id;
-        const authorNames = authors.split(';');
-        const authorPromises = authorNames.map(async (authorName) => {
-            const authorInsertResult = await client.query(
-                'INSERT INTO authors (name) VALUES ($1) RETURNING id',
-                [authorName]
+        try {
+            await client.query('BEGIN');
+
+            const bookInsertResult = await client.query(
+                'INSERT INTO books (isbn13, publication_year, original_title, title, rating_avg, rating_count, rating_1_star, rating_2_star, rating_3_star, rating_4_star, rating_5_star, image_url, image_small_url) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *',
+                [
+                    isbn13,
+                    publication_year,
+                    original_title,
+                    title,
+                    rating_avg,
+                    rating_count,
+                    rating_1_star,
+                    rating_2_star,
+                    rating_3_star,
+                    rating_4_star,
+                    rating_5_star,
+                    image_url,
+                    image_small_url,
+                ],
             );
-            const authorId = authorInsertResult.rows[0].id;
-            await client.query(
-                'INSERT INTO book_author (book, author) VALUES ($1, $2)',
-                [bookId, authorId]
-            );
-        });
 
-        await Promise.all(authorPromises);
-        await client.query('COMMIT');
-        res.status(201).send('Success, new book was added to the database');
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error(`Failed to add book due to ${error}`);
-        res.status(500).send('An error occurred while adding the book');
-    } finally {
-        client.release();
-    }
-});
+            const bookId = bookInsertResult.rows[0].id;
+            const authorNames = authors.split(';');
+            const authorPromises = authorNames.map(async (authorName) => {
+                const authorInsertResult = await client.query(
+                    'INSERT INTO authors (name) VALUES ($1) RETURNING id',
+                    [authorName],
+                );
+                const authorId = authorInsertResult.rows[0].id;
+                await client.query(
+                    'INSERT INTO book_author (book, author) VALUES ($1, $2)',
+                    [bookId, authorId],
+                );
+            });
+
+            await Promise.all(authorPromises);
+            await client.query('COMMIT');
+            res.status(201).send('Success, new book was added to the database');
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error(`Failed to add book due to ${error}`);
+            res.status(500).send('An error occurred while adding the book');
+        } finally {
+            client.release();
+        }
+    });
 
 /**
  * @api {delete} /books/deleteBook?isbn:=isbn
@@ -349,7 +308,7 @@ bookRouter.delete(
         const isbn = req.query.isbn as string;
         pool.query(
             'DELETE FROM book_author WHERE book IN (SELECT id FROM books WHERE isbn13 = $1)',
-            [isbn]
+            [isbn],
         )
             .then(() => {
                 return pool.query('DELETE FROM books WHERE isbn13 = $1', [
@@ -363,11 +322,11 @@ bookRouter.delete(
             })
             .catch((error) => {
                 console.error(
-                    `Server failed to delete book(s) due to ${error}`
+                    `Server failed to delete book(s) due to ${error}`,
                 );
                 res.status(500).send('Server error, so sorry!');
             });
-    }
+    },
 );
 
 /**
@@ -427,7 +386,7 @@ bookRouter.delete(
                     message: 'Range of books deleted!',
                 });
             });
-    }
+    },
 );
 
 export { bookRouter };
