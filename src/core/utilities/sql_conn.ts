@@ -7,6 +7,7 @@ const up1Path = 'migrations/up1.sql';
 const up2Path = 'migrations/up2.sql';
 const up3Path = 'migrations/up3.sql';
 const up4Path = 'migrations/up4.sql';
+const up5Path = 'migrations/up5.sql';
 
 const pgConfig: PoolConfig =
     process.env.PGHOST !== undefined
@@ -63,7 +64,10 @@ async function migrateFromVersion(version: number) {
             console.log('Upgrading to DB Schema V4');
             await upgrade(up4Path);
         case 4:
-            console.log('DB Schema V4 up to date');
+            console.log('Upgrading to DB Schema V5');
+            await upgrade(up5Path);
+        case 5:
+            console.log('DB Schema V5 up to date');
             break;
         default:
             throw new Error(
