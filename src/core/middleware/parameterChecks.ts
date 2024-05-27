@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { pool, validationFunctions } from '../../core/utilities';
+import { pool, validationFunctions } from '../utilities';
 
 const isNumberProvided = validationFunctions.isNumberProvided;
 
@@ -113,18 +113,14 @@ const validPage = (req: Request, res: Response, next: NextFunction) => {
  */
 const validISBN = (req: Request, res: Response, next: NextFunction) => {
     console.log('ISBN Check');
-    if (!req.query.isbn) {
+    const pat = /^[0-9]{13}$/gm;
+    if (!req.query.isbn13) {
         next();
     } else {
-        if (!isNumberProvided(req.query.isbn)) {
-            console.error('The ISBN is not numeric.');
+        if (!isNumberProvided(req.query.isbn13) || !pat.test(<string>(req.query?.isbn13))) {
+            console.error('ISBN is invalid');
             res.status(400).send({
                 message: 'Can not parse ISBN.',
-            });
-        } else if (req.query.isbn.length != 13) {
-            console.error('The ISBN is not 13 digits.');
-            res.status(400).send({
-                message: 'ISBN must be 13 characters.',
             });
         } else {
             next();
